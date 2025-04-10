@@ -1,0 +1,8 @@
+build/
+riscv-gnu-toolchain/
+.vscode/
+.bak/
+*.vcd
+*.fst
+*.hex
+*.log

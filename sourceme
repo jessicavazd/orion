@@ -1,0 +1,47 @@
+# Check if this script is being sourced
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    echo "ERROR: This script must be sourced, not executed."
+    exit 1
+fi
+
+n_errors=0
+
+# ORION_HOME environment variable points to root of Orion project
+export ORION_HOME=$(dirname -- "$(readlink -f "${BASH_SOURCE}")")
+
+
+# VERILATOR_PATH: points to verilator installation
+if command -v "verilator" &>/dev/null; then
+    # get verilator path
+    VLP=$(dirname $(dirname `which verilator`))
+    echo "Found Verilator at: $VLP"
+	export VERILATOR_PATH=$VLP
+else
+    echo "ERROR: Verilator not found; please install verilator"
+    n_errors=$((n_errors + 1))
+fi
+
+
+# Check if RISC-V toolchain is installed
+if command -v "riscv64-unknown-elf-gcc" &>/dev/null; then
+    # get riscv toolchain path
+    RISCV_TOOLCHAIN_PATH=$(dirname $(dirname `which riscv64-unknown-elf-gcc`))
+    echo "Found RISC-V toolchain at: $RISCV_TOOLCHAIN_PATH"
+else
+    echo "ERROR: RISC-V toolchain not found; please install RISC-V toolchain"
+    n_errors=$((n_errors + 1))
+fi
+
+
+# Add orionsim build directory to PATH
+export PATH=$PATH:$ORION_HOME/sim/build/bin
+
+echo "========== Environment Setup complete =========="
+echo "ORION_HOME:           $ORION_HOME"
+echo "VERILATOR_PATH:       $VERILATOR_PATH"
+echo "RISCV_TOOLCHAIN_PATH: $RISCV_TOOLCHAIN_PATH"
+echo "================================================"
+if [ ${n_errors} -ne 0 ]; then
+    echo "Warning: Some dependencies are missing. Please install them."
+    return 1
+fi

@@ -1,0 +1,13 @@
+{
+  // Cache Read Timing Diagram
+  signal: [
+    {name: 'clk',   wave: 'P...|......|'}, 
+    {name: 'addr',  wave: 'x3x.|345x..|', data:['A']},
+    {name: 'mask',  wave: 'x3x.|......|'},
+    {name: 'rdata', wave: 'x.3x|.345x.|', data: ['A']},
+    {name: 'wdata', wave: 'x...|......|'},
+    {name: 'we',    wave: 'x0x.|0..x..|'},
+    {name: 'valid', wave: '01x.|1x.0..|'},
+    {name: 'ack',   wave: '0.10|.1..0.|'}
+  ]
+}
