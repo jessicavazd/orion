@@ -12,13 +12,13 @@ MAKEFLAGS += --no-print-directory
 ################################################################################
 .PHONY: lint
 lint:
-	@echo "$(CLR_GR)>> Performing Lint Check$(CLR_NC)"
+	@echo -e "$(CLR_GR)>> Performing Lint Check$(CLR_NC)"
 	$(MAKE) -C sim lint
 
 
 .PHONY: sim
 sim:
-	@echo "$(CLR_GR)>> Building OrionSim$(CLR_NC)"
+	@echo -e "$(CLR_GR)>> Building OrionSim$(CLR_NC)"
 	$(MAKE) -C sim
 
 
@@ -28,5 +28,5 @@ clean: clean-sim
 
 .PHONY: clean-sim
 clean-sim:
-	@echo "$(CLR_GR)>> Cleaning OrionSim$(CLR_NC)"
+	@echo -e "$(CLR_GR)>> Cleaning OrionSim$(CLR_NC)"
 	$(MAKE) -C sim clean

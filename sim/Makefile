@@ -96,41 +96,41 @@ EXE:= $(BIN_DIR)/orionsim
 ########################################
 .PHONY: sim
 sim: $(EXE)
-	@echo "$(CLR_BL)[+] Orionsim built successfully!$(CLR_NC)"
+	@echo -e "$(CLR_BL)[+] Orionsim built successfully!$(CLR_NC)"
 
 # # EXE <- verilated objs, C++ objs
 $(EXE): $(VERILATED_DIR)/V$(VTOP)__ALL.a $(OBJS)
-	@echo "$(CLR_BL)[+] Linking $@$(CLR_NC)"
+	@echo -e "$(CLR_BL)[+] Linking $@$(CLR_NC)"
 	$(CC) $(OBJS) -o $@ $(LDFLAGS)
 
 # Verilation: verilated_objs <- verilog srcs
 $(VERILATED_DIR)/V$(VTOP)__ALL.a: $(VSRCS)
-	@echo "$(CLR_BL)[+] Generating verilated sources$(CLR_NC)"
+	@echo -e "$(CLR_BL)[+] Generating verilated sources$(CLR_NC)"
 	$(VC) $(VFLAGS) $^
 
-	@echo "$(CLR_BL)[+] Generating combined header file$(CLR_NC)"
+	@echo -e "$(CLR_BL)[+] Generating combined header file$(CLR_NC)"
 	printf "#pragma once\n" > $(VERILATED_DIR)/V$(VTOP)_headers.h
 	find $(VERILATED_DIR) -name "*.h" -printf "#include <%P>\n" >> $(VERILATED_DIR)/V$(VTOP)_headers.h
 
-	@echo "$(CLR_BL)[+] Compiling verilated sources$(CLR_NC)"
+	@echo -e "$(CLR_BL)[+] Compiling verilated sources$(CLR_NC)"
 	$(MAKE) -s -C $(VERILATED_DIR) -f V$(VTOP).mk
 
 	
 # C++ obj <- C++ src (in current dir)
 $(OBJ_DIR)/%.o: %.cc $(VERILATED_DIR)/V$(VTOP)__ALL.a
-	@echo "$(CLR_BL)[+] Compiling $@$(CLR_NC)"
+	@echo -e "$(CLR_BL)[+] Compiling $@$(CLR_NC)"
 	$(CC) $(CXXFLAGS) -c $< -o $@
 
 
 .PHONY: lint
 lint: $(VSRCS)
-	$(VC) $(VFLAGS) --lint-only $(VSRCS) && echo "$(CLR_GR)[+] Linting Success$(CLR_NC)" || \
-	{ echo "$(CLR_RD)[!] Linting failed$(CLR_NC)"; exit 1; }
+	$(VC) $(VFLAGS) --lint-only $(VSRCS) && echo -e "$(CLR_GR)[+] Linting Success$(CLR_NC)" || \
+	{ echo -e "$(CLR_RD)[!] Linting failed$(CLR_NC)"; exit 1; }
 
 
 .PHONY: clean
 clean:
-	@echo "Cleaning up..."
+	@echo -e "Cleaning up..."
 	rm -f $(OBJ_DIR)/*
 	rm -f $(VERILATED_DIR)/*
 	rm -f $(EXE)
