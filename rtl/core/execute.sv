@@ -18,77 +18,72 @@ import orion_types::*;
     output ex_if_t              ex_if_o
 );
 
-logic [31:0] a;
-logic [31:0] b;
+////////////////////////////////////////////////////////////////////////////////
+// ALU
+logic [31:0] alu_a;
+logic [31:0] alu_b;
 logic [31:0] alu_out;
 
+// ALU:A mux
 always_comb begin
     unique case (id_ex_i.alu_sel_a)
-        ALU_SEL_A_RS1   : a = id_ex_i.rs1_v;
-        ALU_SEL_A_PC    : a = id_ex_i.pc;
-        ALU_SEL_A_ZERO  : a = 32'b0;
-        default     : a = 'bx;
+        ALU_SEL_A_RS1   : alu_a = id_ex_i.rs1_v;
+        ALU_SEL_A_PC    : alu_a = id_ex_i.pc;
+        ALU_SEL_A_ZERO  : alu_a = 32'b0;
+        default         : alu_a = 'bx;
     endcase
 end
 
-assign b = id_ex_i.alu_sel_b_imm ? id_ex_i.imm : id_ex_i.rs2_v;
+// ALU:B mux
+assign alu_b = id_ex_i.alu_sel_b_imm ? id_ex_i.imm : id_ex_i.rs2_v;
 
-logic signed   [31:0] as;
-// logic signed   [31:0] bs;
-logic unsigned [31:0] au;
-logic unsigned [31:0] bu;
-
-assign as   =   signed'(a);
-// assign bs   =   signed'(b);
-assign au   = unsigned'(a);
-assign bu   = unsigned'(b);
+logic signed   [31:0] alu_as;
+assign alu_as   =   signed'(alu_a);
 
 always_comb begin
     case (id_ex_i.alu_op)
-        ALU_OP_ADD : alu_out = au + bu;
-        ALU_OP_SUB : alu_out = au - bu;
-        ALU_OP_SLL : alu_out = au << bu[4:0];
-        ALU_OP_XOR : alu_out = au ^ bu;
-        ALU_OP_SRL : alu_out = au >> bu[4:0];
-        ALU_OP_SRA : alu_out = as >>> bu[4:0]; // fixme: unsigned typecast needed?
-        ALU_OP_OR  : alu_out = au | bu;
-        ALU_OP_AND : alu_out = au & bu;
+        ALU_OP_ADD : alu_out = alu_a  +   alu_b;
+        ALU_OP_SUB : alu_out = alu_a  -   alu_b;        // FIXME: can be optimized
+        ALU_OP_SLL : alu_out = alu_a  <<  alu_b[4:0];
+        ALU_OP_XOR : alu_out = alu_a  ^   alu_b;
+        ALU_OP_SRL : alu_out = alu_a  >>  alu_b[4:0];
+        ALU_OP_SRA : alu_out = unsigned'(alu_as >>> alu_b[4:0]);   // FIXME: unsigned typecast needed?
+        ALU_OP_OR  : alu_out = alu_a  |   alu_b;
+        ALU_OP_AND : alu_out = alu_a  &   alu_b;
         default    : alu_out = 'bx;
     endcase
 end
 
-logic   [31:0]  a_cmp;
-logic   [31:0]  b_cmp;
+////////////////////////////////////////////////////////////////////////////////
+// Comparator
+
+logic   [31:0]  cmp_a;
+logic   [31:0]  cmp_b;
 logic           cmp_out;
 
-assign a_cmp    = id_ex_i.rs1_v;
-assign b_cmp    = id_ex_i.cmp_sel_b_imm ? id_ex_i.imm : id_ex_i.rs2_v;
+assign cmp_a    = id_ex_i.rs1_v;
+assign cmp_b    = id_ex_i.cmp_sel_b_imm ? id_ex_i.imm : id_ex_i.rs2_v;
 
-logic signed   [31:0] as_cmp;
-logic signed   [31:0] bs_cmp;
-logic unsigned [31:0] au_cmp;
-logic unsigned [31:0] bu_cmp;
-
-
-assign as_cmp   = signed'(a_cmp);
-assign bs_cmp   = signed'(b_cmp);
-assign au_cmp   = unsigned'(a_cmp);
-assign bu_cmp   = unsigned'(b_cmp);
+logic signed   [31:0] cmp_as;
+logic signed   [31:0] cmp_bs;
+assign cmp_as   = signed'(cmp_a);
+assign cmp_bs   = signed'(cmp_b);
 
 always_comb begin
     unique case (id_ex_i.cmp_op)
-        CMP_OP_EQ  : cmp_out = (au_cmp == bu_cmp);
-        CMP_OP_NEQ : cmp_out = (au_cmp != bu_cmp);
-        CMP_OP_LT  : cmp_out = (as_cmp <  bs_cmp);
-        CMP_OP_GE  : cmp_out = (as_cmp >= bs_cmp);
-        CMP_OP_LTU : cmp_out = (au_cmp <  bu_cmp);
-        CMP_OP_GEU : cmp_out = (au_cmp >= bu_cmp);
+        CMP_OP_EQ  : cmp_out = (cmp_a  == cmp_b);
+        CMP_OP_NEQ : cmp_out = (cmp_a  != cmp_b);
+        CMP_OP_LT  : cmp_out = (cmp_as <  cmp_bs);
+        CMP_OP_GE  : cmp_out = (cmp_as >= cmp_bs);
+        CMP_OP_LTU : cmp_out = (cmp_a  <  cmp_b);
+        CMP_OP_GEU : cmp_out = (cmp_a  >= cmp_b);
         default    : cmp_out = 1'bx;
     endcase
 end
 
+////////////////////////////////////////////////////////////////////////////////
+// Memory Request Generation
 
-// MEM REQ
 logic [ADDRW-1:0] mem_addr;
 logic [MASKW-1:0] mem_mask;
 

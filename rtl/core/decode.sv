@@ -126,7 +126,7 @@ import orion_types::*;
             OP_AUIPC: begin
                 id_ex_o.alu_op          = ALU_OP_ADD;
                 id_ex_o.alu_sel_a       = ALU_SEL_A_PC;
-                id_ex_o.alu_sel_b_imm   = 1'b0;
+                id_ex_o.alu_sel_b_imm   = 1'b1;
                 id_ex_o.imm             = imm_u;
                 id_ex_o.rd_we           = 1'b1;
             end
