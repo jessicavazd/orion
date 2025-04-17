@@ -9,7 +9,7 @@ BUILD_DIR?= build
 DEBUG?= 0
 
 # Trace format (vcd/fst)
-TRACE_FORMAT?= vcd
+TRACE_FORMAT?= fst
 
 ########################################
 CLR_RD := \033[0;31m

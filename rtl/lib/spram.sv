@@ -6,6 +6,7 @@ module spram #(
     parameter DATAW         = 32,   // Data width
     parameter EN_PIPE       = 1,    // Enable pipeline registers
     parameter INIT_FILE     = "",   // Memory initialization file
+    parameter RESET_BUFS    = 0,    // Reset buffers
 
     parameter DEPTH         = SIZE/(DATAW/8),
     parameter ADDRW         = $clog2(SIZE),
@@ -31,11 +32,11 @@ module spram #(
     logic [DATAW-1:0] mem [0:DEPTH-1] /* verilator public */;
 
     // Optional memory initialization
-    initial begin
-        if (INIT_FILE != "") begin
-            $readmemh(INIT_FILE, mem);
-        end
-    end
+    // initial begin
+    //     if (INIT_FILE != "") begin
+    //         $readmemh(INIT_FILE, mem);
+    //     end
+    // end
 
     // Sequential write
     always_ff @(posedge clk_i) begin: mem_write
@@ -52,7 +53,7 @@ module spram #(
     generate
         if (EN_PIPE) begin: seq_read
             always_ff @(posedge clk_i) begin
-                if(rst_i) begin
+                if(RESET_BUFS && rst_i) begin
                     data_o  <= 0;
                     resp_o  <= 0;
                 end 

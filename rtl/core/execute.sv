@@ -14,8 +14,10 @@ import orion_types::*;
     output logic                dmem_we_o,
 
     input id_ex_t               id_ex_i,
-    output ex_mem_t             ex_mem_o,
-    output ex_if_t              ex_if_o
+
+    output ex_if_t              ex_if_o,
+    output ex_id_t              ex_id_o,
+    output ex_mem_t             ex_mem_o
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -121,21 +123,44 @@ assign dmem_we_o    = id_ex_i.is_store;
 assign ex_if_o.jump_en   = id_ex_i.valid && id_ex_i.is_jump && (id_ex_i.is_jump_conditional ? cmp_out : 1'b1);
 assign ex_if_o.jump_addr = {alu_out[XLEN-1:1], 1'b0};
 
+logic [XLEN-1:0] rd_v;
+always_comb begin
+    unique case (id_ex_i.ex_mux_sel)
+        SEL_ALU_OUT : rd_v = alu_out;
+        SEL_CMP_OUT : rd_v = {31'b0, cmp_out};
+        SEL_PC_NEXT : rd_v = id_ex_i.pc + 32'd4;
+        default     : rd_v = 'bx;
+    endcase
+end
 
 assign ex_mem_o.valid       = id_ex_i.valid;
 assign ex_mem_o.rd_s        = id_ex_i.rd_s;
 assign ex_mem_o.rd_we       = id_ex_i.rd_we;
-assign ex_mem_o.sel_wb_mux  = id_ex_i.sel_wb_mux;
-assign ex_mem_o.alu_out     = alu_out;
-assign ex_mem_o.cmp_out     = cmp_out;
+assign ex_mem_o.rd_v        = rd_v;
 assign ex_mem_o.ld_str_type = id_ex_i.ld_str_type;
 assign ex_mem_o.is_load     = id_ex_i.is_load;
 assign ex_mem_o.is_store    = id_ex_i.is_store;
 
-assign ex_mem_o.pc          = id_ex_i.pc;
+// Forwarding interface to decode
+assign ex_id_o.valid        = ex_mem_o.valid;
+assign ex_id_o.rd_we        = ex_mem_o.rd_we;
+assign ex_id_o.rd_s         = ex_mem_o.rd_s;
+assign ex_id_o.rd_v         = ex_mem_o.rd_v;
+assign ex_id_o.is_load      = ex_mem_o.is_load; // For load-use hazard detection
 
-// Debug signals
-assign ex_mem_o.debug       = id_ex_i.debug;
+
+`ifndef SYNTHESIS
+    // Debug signals
+    assign ex_mem_o.debug.instr  = id_ex_i.debug.instr;
+    assign ex_mem_o.debug.pc     = id_ex_i.debug.pc;
+    assign ex_mem_o.debug.rs1_s  = id_ex_i.debug.rs1_s;
+    assign ex_mem_o.debug.rs2_s  = id_ex_i.debug.rs2_s;
+    assign ex_mem_o.debug.rd_s   = id_ex_i.debug.rd_s;
+    assign ex_mem_o.debug.rs1_v  = id_ex_i.debug.rs1_v;
+    assign ex_mem_o.debug.rs2_v  = id_ex_i.debug.rs2_v;
+    assign ex_mem_o.debug.rd_v   = 'x;
+    assign ex_mem_o.debug.rd_we  = 'x;
+`endif
 
 `UNUSED_VAR(mem_addr);
 endmodule

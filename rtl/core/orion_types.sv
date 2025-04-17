@@ -64,11 +64,11 @@ typedef enum logic [2:0] {
 } cmp_ops_t;
 
 typedef enum logic [1:0] {
-    WB_MUX_ALU      = 2'b00,
-    WB_MUX_CMP      = 2'b01,
-    WB_MUX_MEM      = 2'b10,
-    WB_MUX_PC_NEXT  = 2'b11
-} wb_mux_t;
+    SEL_ALU_OUT     = 2'b00,
+    SEL_CMP_OUT     = 2'b01,
+    SEL_PC_NEXT     = 2'b11
+}  ex_mux_sel_t;
+
 
 typedef enum logic [2:0] {
     FUNCT3_LS_B   = 3'b000,
@@ -118,74 +118,102 @@ typedef enum logic [2:0] {
 //     );
 // endinterface
 
-typedef struct packed {
-    logic [XLEN-1:0]    pc;
-    logic [XLEN-1:0]    instr;
-} debug_t;
+
 
 typedef struct packed {
-    logic                       valid;
-    logic [XLEN-1:0]            pc;
-    logic [DATAW-1:0]           instr; 
+    logic [XLEN-1:0]        pc;
+    logic [XLEN-1:0]        instr;
+    logic [RF_IDX_BITS-1:0] rs1_s;
+    logic [RF_IDX_BITS-1:0] rs2_s;
+    logic [RF_IDX_BITS-1:0] rd_s;
+    logic [XLEN-1:0]        rs1_v;
+    logic [XLEN-1:0]        rs2_v;
+    logic [XLEN-1:0]        rd_v;
+    logic                   rd_we;
+} debug_t;
+
+
+
+typedef struct packed {
+    logic                   valid;
+    logic [XLEN-1:0]        pc;
+    logic [DATAW-1:0]       instr; 
 } if_id_t; 
 
 typedef struct packed {
-    logic                       valid;
-    logic [XLEN-1:0]            pc;
-    logic [XLEN-1:0]            rs1_v;
-    logic [XLEN-1:0]            rs2_v;
-    logic [XLEN-1:0]            imm;
-    logic [RF_IDX_BITS-1:0]     rd_s;
-    logic                       rd_we;
-    alu_ops_t                   alu_op;
-    cmp_ops_t                   cmp_op;
-    alu_sel_a_t                 alu_sel_a;
-    logic                       alu_sel_b_imm;
-    logic                       cmp_sel_b_imm;
-    wb_mux_t                    sel_wb_mux;
-    funct3_load_store_t         ld_str_type;
-    logic                       is_load;    
-    logic                       is_store;
-    logic                       is_jump;
-    logic                       is_jump_conditional;
+    logic                   valid;
+    logic [XLEN-1:0]        pc;
+    logic [XLEN-1:0]        rs1_v;
+    logic [XLEN-1:0]        rs2_v;
+    logic [XLEN-1:0]        imm;
+    logic [RF_IDX_BITS-1:0] rd_s;
+    logic                   rd_we;
+    alu_ops_t               alu_op;
+    cmp_ops_t               cmp_op;
+    alu_sel_a_t             alu_sel_a;
+    logic                   alu_sel_b_imm;
+    logic                   cmp_sel_b_imm;
+    ex_mux_sel_t            ex_mux_sel;
+    funct3_load_store_t     ld_str_type;
+    logic                   is_load;    
+    logic                   is_store;
+    logic                   is_jump;
+    logic                   is_jump_conditional;
 
-    debug_t                     debug;
+    debug_t                 debug;
 } id_ex_t;
 
-typedef struct packed {
-    logic                       valid;
-    logic [XLEN-1:0]            pc;
-    logic [RF_IDX_BITS-1:0]     rd_s;
-    logic                       rd_we;
-    logic [XLEN-1:0]            alu_out;
-    logic                       cmp_out;
-    wb_mux_t                    sel_wb_mux;
-    funct3_load_store_t         ld_str_type;
-    logic                       is_load;    
-    logic                       is_store;
 
-    debug_t                     debug;
-} ex_mem_t;
 
 typedef struct packed {
-    logic                       valid;
-    logic [RF_IDX_BITS-1:0]     rd_s;
-    logic                       rd_we;
-    logic [XLEN-1:0]            rd_v;
-
-    debug_t                     debug;
-} mem_wb_t;
-
-typedef struct packed {
-    logic                       rd_we;
-    logic [XLEN-1:0]            rd_v;
-    logic [RF_IDX_BITS-1:0]     rd_s;
-} wb_id_t;
-
-typedef struct packed {
-    logic                       jump_en;
-    logic [XLEN-1:0]            jump_addr;            
+    logic                   jump_en;
+    logic [XLEN-1:0]        jump_addr;            
 } ex_if_t;
 
+typedef struct packed {
+    logic                   valid;
+    logic                   rd_we;
+    logic [RF_IDX_BITS-1:0] rd_s;
+    logic [XLEN-1:0]        rd_v;
+    logic                   is_load;    
+} ex_id_t;
+
+typedef struct packed {
+    logic                   valid;
+    logic [RF_IDX_BITS-1:0] rd_s;
+    logic                   rd_we;
+    logic [XLEN-1:0]        rd_v;
+    funct3_load_store_t     ld_str_type;
+    logic                   is_load;    
+    logic                   is_store;
+
+    debug_t                 debug;
+} ex_mem_t;
+
+
+
+typedef struct packed {
+    logic                   valid;
+    logic                   rd_we;
+    logic [RF_IDX_BITS-1:0] rd_s;
+    logic [XLEN-1:0]        rd_v;
+} mem_id_t;
+
+typedef struct packed {
+    logic                   valid;
+    logic [RF_IDX_BITS-1:0] rd_s;
+    logic                   rd_we;
+    logic [XLEN-1:0]        rd_v;
+
+    debug_t                 debug;
+} mem_wb_t;
+
+
+
+typedef struct packed {
+    logic                   rd_we;
+    logic [XLEN-1:0]        rd_v;
+    logic [RF_IDX_BITS-1:0] rd_s;
+} wb_id_t;
 
 endpackage

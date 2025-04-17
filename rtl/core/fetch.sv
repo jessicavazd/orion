@@ -17,8 +17,24 @@ import orion_types::*;
     output if_id_t              if_id_o 
 );
 
+    // TODO: We need to discard response when jumping,
+    // The response may come in current cycle or later cycles.
     logic discard_imem_resp;
-    assign discard_imem_resp = 1'b0;        // FIXME:
+    assign discard_imem_resp = 1'b0;    
+    // always_ff @(posedge clk_i) begin
+    //     if (rst_i) begin
+    //         discard_imem_resp <= 1'b0;
+    //     end
+    //     else begin
+    //         if (ex_if_i.jump_en) begin
+    //             discard_imem_resp <= 1'b1;
+    //         end
+    //         else if (discard_imem_resp && imem_resp_i) begin     // We got response from I$, discard it
+    //             discard_imem_resp <= 1'b0;
+    //         end
+    //     end
+    // end
+    
 
     logic imem_resp;
     assign imem_resp = imem_resp_i && !discard_imem_resp;
@@ -27,26 +43,24 @@ import orion_types::*;
     logic pc_stall;
     assign pc_stall = stall_i || !imem_resp;
 
+    // PC register
+    logic [XLEN-1:0]  pc /* verilator public */;
     logic [XLEN-1:0]  pc_next;
     always_comb begin
-        pc_next = pc + 'd4;
-
-        if(ex_if_i.jump_en) begin
+        if(rst_i) begin
+            pc_next = PC_RESET_ADDR;
+        end
+        else if(ex_if_i.jump_en) begin
             pc_next = ex_if_i.jump_addr;
+        end 
+        else begin
+            pc_next = pc + 'd4;
         end
     end
 
-    // PC register
-    logic [XLEN-1:0]  pc /* verilator public */;
-    
     always_ff @(posedge clk_i) begin
-        if(rst_i) begin
-            pc <= PC_RESET_ADDR;
-        end
-        else begin
-            if(!pc_stall)
-                pc <= pc_next;
-        end
+        if(!pc_stall)
+            pc <= pc_next;
     end
 
     // Send addr to I$ in current cycle

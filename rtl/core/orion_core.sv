@@ -2,7 +2,6 @@
 `default_nettype none
 
 // TODO:
-// Forwarding logic && hazards
 // deal with flush correctly in fetch stage (discard imem_resp)
 
 module orion_core 
@@ -28,12 +27,14 @@ import orion_types::*;
 );
     // Interfaces
     if_id_t  if_id, if_id_reg;
-    wb_id_t  wb_id;
     id_ex_t  id_ex, id_ex_reg;
     ex_mem_t ex_mem, ex_mem_reg;
     mem_wb_t mem_wb, mem_wb_reg;
-    ex_if_t  ex_if;
 
+    ex_if_t  ex_if;
+    ex_id_t  ex_id;
+    mem_id_t mem_id;
+    wb_id_t  wb_id;
 
     /*
         Definition of a stall in ith stage:
@@ -87,8 +88,12 @@ import orion_types::*;
         .clk_i          (clk_i),
         .rst_i          (rst_i),
         .flush_req      (id_flush_req),
+        
         .if_id_i        (if_id_reg),
+        .ex_id_i        (ex_id),
+        .mem_id_i       (mem_id),
         .wb_id_i        (wb_id),
+
         .id_ex_o        (id_ex)
     );
 
@@ -117,7 +122,9 @@ import orion_types::*;
         .dmem_we_o       (dmem_we_o),
 
         .id_ex_i         (id_ex_reg),
+
         .ex_if_o         (ex_if),
+        .ex_id_o         (ex_id),
         .ex_mem_o        (ex_mem)
     ); 
 
@@ -145,6 +152,8 @@ import orion_types::*;
         .stall_o        (mem_stall_o),
 
         .ex_mem_i       (ex_mem_reg),
+
+        .mem_id_o       (mem_id),
         .mem_wb_o       (mem_wb)
     );
 

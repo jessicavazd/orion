@@ -30,7 +30,16 @@ always_ff @(posedge clk_i) begin: regfile_write
 end
 
 // Combinatorial read
-assign rs1_v_o = regs[rs1_s_i];
-assign rs2_v_o = regs[rs2_s_i];
+
+// Forwarding from WB to ID
+// Transparent regfile
+logic   forward_rs1;
+logic   forward_rs2;
+
+assign forward_rs1  = we_i && (rs1_s_i != 5'b0) && (rs1_s_i == rd_s_i);
+assign forward_rs2  = we_i && (rs2_s_i != 5'b0) && (rs2_s_i == rd_s_i);
+
+assign rs1_v_o        = forward_rs1 ? rd_v_i : regs[rs1_s_i];
+assign rs2_v_o        = forward_rs2 ? rd_v_i : regs[rs2_s_i];
 
 endmodule

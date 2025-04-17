@@ -17,8 +17,10 @@
 
 #ifdef TRACE_FST
     #define TRACE_FILE "trace.fst"
+    #define TRACE_TYPE_STR "FST"
 #else
     #define TRACE_FILE "trace.vcd"
+    #define TRACE_TYPE_STR "VCD"
 #endif
 
 std::string banner = 
@@ -38,9 +40,17 @@ public:
         tb->register_clk((bool*)&tb->dut_->clk_i);
         tb->register_rst((bool*)&tb->dut_->rst_i);
 
+        // Setup scope pointers
         signal_ptrs.instr_valid = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_valid;
-        signal_ptrs.instr = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_instr;
-        signal_ptrs.pc = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_pc;
+        signal_ptrs.instr       = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_instr;
+        signal_ptrs.pc          = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_pc;
+        signal_ptrs.rs1_s       = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rs1_s;
+        signal_ptrs.rs2_s       = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rs2_s;
+        signal_ptrs.rd_s        = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rd_s;
+        signal_ptrs.rs1_v       = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rs1_v;
+        signal_ptrs.rs2_v       = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rs2_v;
+        signal_ptrs.rd_v        = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rd_v;
+        signal_ptrs.rd_we       = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rd_we;
     }
 
     ~OrionSim() {
@@ -167,9 +177,13 @@ public:
     }
 
     void sim_log() {
-        uint32_t pc = tb->dut_->orion_soc->core->fetch_stg->pc;
-        uint32_t instr = tb->dut_->orion_soc->core->decode_stg->instr;
-        fprintf(log_f, "[%lu] PC: 0x%08x, Instr: 0x%08x\n", tb->get_cycles(), pc, instr);
+        fprintf(log_f, "[%8lu] %s ", tb->get_cycles(), *signal_ptrs.instr_valid ? "       " : "INVALID");
+
+        fprintf(log_f, "PC: 0x%08x, Instr: 0x%08x, ", *signal_ptrs.pc, *signal_ptrs.instr);
+        fprintf(log_f, "rd: (x%-2d: 0x%08x, we: %d), ", *signal_ptrs.rd_s & 0x1f, *signal_ptrs.rd_v, *signal_ptrs.rd_we);
+        fprintf(log_f, "rs1: (x%-2d: 0x%08x), ", *signal_ptrs.rs1_s & 0x1f, *signal_ptrs.rs1_v);
+        fprintf(log_f, "rs2: (x%-2d: 0x%08x) ", *signal_ptrs.rs2_s & 0x1f, *signal_ptrs.rs2_v);
+        fprintf(log_f, "\n");
     }
 
     void open_log(const std::string &filename) {
@@ -190,7 +204,14 @@ private:
     struct {
         uint32_t *instr_valid;
         uint32_t *instr;
-        uint32_t *pc;        
+        uint32_t *pc;
+        uint32_t *rs1_s;
+        uint32_t *rs2_s;
+        uint32_t *rd_s;
+        uint32_t *rs1_v;
+        uint32_t *rs2_v;
+        uint32_t *rd_v;
+        uint32_t *rd_we;
     } signal_ptrs;
 
     FILE *log_f = nullptr;
@@ -203,7 +224,7 @@ int main(int argc, char** argv) {
     ArgParse::ArgumentParser parser("orionsim", "RTL simulator for the OrionSoC");
     parser.add_argument({"-m", "--max-cycles"}, "Maximum number of cycles to simulate", ArgParse::ArgType_t::INT);
     parser.add_argument({"-t", "--trace"}, "Enable trace", ArgParse::ArgType_t::BOOL, "false");
-    parser.add_argument({"--trace-file"}, "Specify a trace file", ArgParse::ArgType_t::STR, TRACE_FILE);
+    parser.add_argument({"--trace-file"}, "Specify a trace file (Trace type: " TRACE_TYPE_STR ")", ArgParse::ArgType_t::STR, TRACE_FILE);
     parser.add_argument({"-l", "--log"}, "Enable simulation log", ArgParse::ArgType_t::STR);
 
     if(parser.parse_args(argc, argv) != 0) {

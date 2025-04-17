@@ -12,6 +12,8 @@ import orion_types::*;
     output logic                stall_o,
 
     input  ex_mem_t             ex_mem_i,
+
+    output mem_id_t             mem_id_o,
     output mem_wb_t             mem_wb_o
 );
 
@@ -19,7 +21,7 @@ import orion_types::*;
 logic [ADDRW-1:0] mem_addr;
 logic [XLEN-1:0]  mem_rdata;
 
-assign mem_addr = ex_mem_i.alu_out;
+assign mem_addr = ex_mem_i.rd_v;
 
 always_comb begin
     unique case (ex_mem_i.ld_str_type)
@@ -32,34 +34,42 @@ always_comb begin
     endcase
 end
 
-// Writeback MUX
-logic [XLEN-1:0] rd_v_out;
-
-always_comb begin
-    unique case (ex_mem_i.sel_wb_mux)
-        WB_MUX_ALU      : rd_v_out = ex_mem_i.alu_out;
-        WB_MUX_CMP      : rd_v_out = {31'b0,ex_mem_i.cmp_out};
-        WB_MUX_MEM      : rd_v_out = mem_rdata;
-        WB_MUX_PC_NEXT  : rd_v_out = ex_mem_i.pc + 32'd4;
-        default         : rd_v_out = 'bx;
-    endcase
-end
+logic [XLEN-1:0] rd_v;
+assign rd_v = ex_mem_i.is_load ? mem_rdata : ex_mem_i.rd_v; 
 
 // Memory stall
 logic mem_stall;
 assign mem_stall = ex_mem_i.valid && (ex_mem_i.is_load || ex_mem_i.is_store) && !dmem_resp_i;
 
 assign mem_wb_o.valid  = mem_stall ? 1'b0 : ex_mem_i.valid;
-assign mem_wb_o.rd_v   = rd_v_out;
+assign mem_wb_o.rd_v   = rd_v;
 assign mem_wb_o.rd_s   = ex_mem_i.rd_s;
 assign mem_wb_o.rd_we  = ex_mem_i.rd_we;
 
 assign stall_o = mem_stall;
 
-// Debug signals 
-assign mem_wb_o.debug  = ex_mem_i.debug;
+
+// Forwarding interface to decode
+assign mem_id_o.valid   = mem_wb_o.valid;
+assign mem_id_o.rd_we   = mem_wb_o.rd_we;
+assign mem_id_o.rd_s    = mem_wb_o.rd_s;
+assign mem_id_o.rd_v    = mem_wb_o.rd_v;
+
+
+
+`ifndef SYNTHESIS
+    // Debug signals
+    assign mem_wb_o.debug.instr  = ex_mem_i.debug.instr;
+    assign mem_wb_o.debug.pc     = ex_mem_i.debug.pc;
+    assign mem_wb_o.debug.rs1_s  = ex_mem_i.debug.rs1_s;
+    assign mem_wb_o.debug.rs2_s  = ex_mem_i.debug.rs2_s;
+    assign mem_wb_o.debug.rd_s   = ex_mem_i.debug.rd_s;
+    assign mem_wb_o.debug.rs1_v  = ex_mem_i.debug.rs1_v;
+    assign mem_wb_o.debug.rs2_v  = ex_mem_i.debug.rs2_v;
+    assign mem_wb_o.debug.rd_v   = 'x;
+    assign mem_wb_o.debug.rd_we  = 'x;
+`endif
 
 `UNUSED_VAR(mem_addr);
-
 
 endmodule

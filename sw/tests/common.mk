@@ -7,6 +7,7 @@ BUILD_DIR?= build
 SRCS?= 
 EXEC?= a.elf
 TRACE?= 
+LOG?=
 
 ################################################################################
 RVPREFIX := riscv64-unknown-elf
@@ -16,7 +17,13 @@ LFLAGS := -T $(ORION_HOME)/sw/lib/link.ld
 
 ORIONSIM_FLAGS:= 
 ifeq ($(TRACE), 1)
-    ORIONSIM_FLAGS += -t --trace-file $(ORION_HOME)/trace.vcd
+    # Get the trace format from simulator
+    ORIONSIM_TRACE_TYPE:= $(shell orionsim --help | grep -oP 'Trace type:\s*\K\w+' | tr '[:upper:]' '[:lower:]')
+    ORIONSIM_FLAGS += -t --trace-file $(ORION_HOME)/trace.$(ORIONSIM_TRACE_TYPE)
+endif
+
+ifeq ($(LOG), 1)
+    ORIONSIM_FLAGS += --log $(ORION_HOME)/sim.log
 endif
 
 all: build
