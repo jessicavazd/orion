@@ -10,8 +10,6 @@ parameter MASKW     = DATAW/8;  // Width of the mask
 parameter NUM_REGS  = 32;
 parameter RF_IDX_BITS = $clog2(NUM_REGS);
 
-parameter PC_RESET_ADDR     = 32'h0000_0000; // Reset address for the program counter
-
 ////////////////////////////////////////////////////////////////////////////////
 // Types
 typedef enum logic [6:0] {

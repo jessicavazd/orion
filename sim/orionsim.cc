@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <vector>
 #include <fstream>
@@ -8,12 +9,14 @@
 
 #include "Vorion_soc_headers.h"
 
-#define MEM_ADDR 0x0000000
-#define MEM_SIZE (32*1024)
+// #define MEM_ADDR 0x00000000
+#define MEM_SIZE (64*1024)  // 64KB
 
 #define RV_EBREAK 0x00100073
 
-#define SIMLOG(x, ...) printf("[+] " x, ##__VA_ARGS__)
+#define SIMLOG(x, ...)  printf("[+] " x, ##__VA_ARGS__)
+#define SIMWARN(x, ...) printf("[!] " x, ##__VA_ARGS__)
+#define SIMERR(x, ...)  printf("[ERROR] " x, ##__VA_ARGS__)
 
 #ifdef TRACE_FST
     #define TRACE_FILE "trace.fst"
@@ -133,7 +136,7 @@ public:
         }
 
         std::string line;
-        uint32_t addr = 0x0000000;
+        uint32_t addr = 0x0000000;          // Local to memory
         uint64_t nbytes_written = 0;
 
         while(std::getline(hex_file, line)) {
@@ -141,7 +144,8 @@ public:
             
             // Update address if line starts with '@'
             if(line[0] == '@') {
-                addr = std::stoul(line.substr(1, line.size() - 1), nullptr, 16);
+                std::runtime_error("Address parsing not implemented");
+                // addr = std::stoul(line.substr(1, line.size() - 1), nullptr, 16);
                 continue;
             }
 
@@ -149,25 +153,35 @@ public:
             uint32_t data = std::stoul(line, nullptr, 16);
             
             // Check if the address is within the valid range
-            if(!(/*addr >= MEM_ADDR || */ addr < MEM_ADDR + MEM_SIZE)) {
+            if(!(/*addr >= MEM_ADDR || */  addr < /*MEM_ADDR +*/ MEM_SIZE)) {
                 fprintf(stderr, "Error: Address out of range: 0x%08X\n", addr);
-                continue;
+                fprintf(stderr, "       Memory Initializatioin failed");
+                exit(1);
             }
             
             // Write the data word to the memory
-            uint32_t word_index = (addr - MEM_ADDR) / 4;
-            tb->dut_->orion_soc->imem->mem[word_index] = data;
+            uint32_t memory_word_index = (addr /*- MEM_ADDR*/) / 4;
+            tb->dut_->orion_soc->memory->mem[memory_word_index] = data;
             addr += 4;
             nbytes_written += 4;
         }
 
         hex_file.close();
-        SIMLOG("Loaded %lu bytes in imem\n", nbytes_written);
+        SIMLOG("Loaded %lu bytes in memory\n", nbytes_written);
     }
 
-    void dump_mem(std::string filename, uint32_t addr, uint32_t size) {
+    void dump_mem(std::string filename) {
         SIMLOG("Dumping memory to file: %s\n", filename.c_str());
-        // TODO: 
+        std::ofstream dump_file(filename, std::ios::binary);
+        if(!dump_file.is_open()) {
+            fprintf(stderr, "Error: Could not open dump file: %s\n", filename.c_str());
+            return;
+        }
+        for(uint32_t word_indx = 0; word_indx < MEM_SIZE / 4; word_indx++) {
+            uint32_t data = tb->dut_->orion_soc->memory->mem[word_indx];
+            dump_file << std::hex << std::setw(8) << std::setfill('0') << data << "\n";
+        }
+        dump_file.close();
     }
 
     void set_max_cycles(uint64_t cycles) {
@@ -226,6 +240,7 @@ int main(int argc, char** argv) {
     parser.add_argument({"-t", "--trace"}, "Enable trace", ArgParse::ArgType_t::BOOL, "false");
     parser.add_argument({"--trace-file"}, "Specify a trace file (Trace type: " TRACE_TYPE_STR ")", ArgParse::ArgType_t::STR, TRACE_FILE);
     parser.add_argument({"-l", "--log"}, "Enable simulation log", ArgParse::ArgType_t::STR);
+    parser.add_argument({"--dump-mem"}, "Dump memory contents to a file after simulation finishes", ArgParse::ArgType_t::STR);
 
     if(parser.parse_args(argc, argv) != 0) {
         return 1;
@@ -264,6 +279,12 @@ int main(int argc, char** argv) {
 
     // Run the simulation
     int rv = sim.run();
+
+    // Dump memory contents to a file
+    if(opt_args.count("dump_mem") > 0) {
+        std::string dump_file = opt_args["dump_mem"].value.as_str;
+        sim.dump_mem(dump_file);
+    }
 
     return rv;
 }

@@ -32,11 +32,11 @@ module spram #(
     logic [DATAW-1:0] mem [0:DEPTH-1] /* verilator public */;
 
     // Optional memory initialization
-    // initial begin
-    //     if (INIT_FILE != "") begin
-    //         $readmemh(INIT_FILE, mem);
-    //     end
-    // end
+    initial begin
+        if (INIT_FILE != "") begin
+            $readmemh(INIT_FILE, mem);
+        end
+    end
 
     // Sequential write
     always_ff @(posedge clk_i) begin: mem_write

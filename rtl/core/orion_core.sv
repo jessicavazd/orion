@@ -6,7 +6,9 @@
 
 module orion_core 
 import orion_types::*;
-(
+#(
+    parameter PC_RESET_ADDR = 32'h8000_0000
+)(
     input logic                 clk_i,
     input logic                 rst_i,
 
