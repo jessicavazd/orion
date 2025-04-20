@@ -6,7 +6,7 @@ module spram #(
     parameter DATAW         = 32,   // Data width
     parameter EN_PIPE       = 1,    // Enable pipeline registers
     parameter INIT_FILE     = "",   // Memory initialization file
-    parameter RESET_BUFS    = 0,    // Reset buffers
+    parameter RESET_BUFS    = 1,    // Reset buffers
 
     parameter DEPTH         = SIZE/(DATAW/8),
     parameter ADDRW         = $clog2(SIZE),

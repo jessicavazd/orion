@@ -12,6 +12,8 @@
 // #define MEM_ADDR 0x00000000
 #define MEM_SIZE (64*1024)  // 64KB
 
+#define RESET_CYCLES 2
+
 #define RV_EBREAK 0x00100073
 
 #define SIMLOG(x, ...)  printf("[+] " x, ##__VA_ARGS__)
@@ -73,7 +75,7 @@ public:
         int rv = 0;
 
         SIMLOG("Resetting SoC\n");
-        tb->reset();
+        tb->reset(RESET_CYCLES);
 
         // Tick the simulation
         uint32_t finish_pc = 0;
@@ -96,7 +98,7 @@ public:
         SIMLOG("Simulation finished @ %lu cycles\n", tb->get_cycles());
 
         if(tb->get_cycles() >= max_cycles) {
-            SIMLOG("  Reached maximum cycles: %lu)\n", max_cycles);
+            SIMLOG("  Reached maximum cycles: %lu\n", max_cycles);
             rv = 0;
         } else if(tb->finished()) {
             SIMLOG("  $finish called from RTL\n");
