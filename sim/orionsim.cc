@@ -198,6 +198,7 @@ public:
         fprintf(log_f, "rs1: (x%-2d: 0x%08x), ", *signal_ptrs.rs1_s & 0x1f, *signal_ptrs.rs1_v);
         fprintf(log_f, "rs2: (x%-2d: 0x%08x) ", *signal_ptrs.rs2_s & 0x1f, *signal_ptrs.rs2_v);
         fprintf(log_f, "\n");
+        fflush(log_f);
     }
 
     void open_log(const std::string &filename) {

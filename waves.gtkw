@@ -1,54 +1,128 @@
 [*]
-[*] GTKWave Analyzer v3.3.100 (w)1999-2019 BSI
-[*] Thu Apr 17 06:46:01 2025
+[*] GTKWave Analyzer v3.3.121 (w)1999-2024 BSI
+[*] Sun Apr 20 09:11:21 2025
 [*]
-[dumpfile] "\\wsl.localhost\Ubuntu\home\jessica16\work\orion\trace.fst"
-[dumpfile_mtime] "Thu Apr 17 06:02:46 2025"
-[dumpfile_size] 8087
-[savefile] "\\wsl.localhost\Ubuntu\home\jessica16\work\orion\waves.gtkw"
+[dumpfile] "/home/saursin/work/orion/trace.fst"
+[dumpfile_mtime] "Sun Apr 20 09:05:13 2025"
+[dumpfile_size] 8680
+[savefile] "/home/saursin/work/orion/waves.gtkw"
 [timestart] 8
-[size] 1920 1009
+[size] 1920 1153
 [pos] -1 -1
-*-4.458847 28 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-5.475232 170 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.orion_soc.
-[treeopen] TOP.orion_soc.core.
+[treeopen] TOP.orion_soc.core.execute_stg.id_ex_i.
 [treeopen] TOP.orion_soc.core.fetch_stg.
-[treeopen] TOP.orion_soc.core.writeback_stg.
-[sst_width] 283
-[signals_width] 174
+[sst_width] 269
+[signals_width] 275
 [sst_expanded] 1
-[sst_vpaned_height] 569
+[sst_vpaned_height] 347
 @28
-TOP.orion_soc.core.fetch_stg.clk_i
-TOP.orion_soc.core.fetch_stg.rst_i
-@22
-TOP.orion_soc.core.fetch_stg.pc[31:0]
-@23
-TOP.orion_soc.core.fetch_stg.pc_next[31:0]
-@22
-TOP.orion_soc.core.decode_stg.reg_f.regs[1][31:0]
-TOP.orion_soc.core.decode_stg.reg_f.regs[5][31:0]
-TOP.orion_soc.core.decode_stg.reg_f.regs[7][31:0]
-TOP.orion_soc.core.decode_stg.reg_f.regs[8][31:0]
-TOP.orion_soc.core.decode_stg.reg_f.regs[9][31:0]
-TOP.orion_soc.core.decode_stg.reg_f.regs[10][31:0]
-TOP.orion_soc.core.decode_stg.reg_f.regs[11][31:0]
-@28
-TOP.orion_soc.core.writeback_stg.dbg_rd_we
+TOP.rst_i
+TOP.clk_i
 @200
 -FETCH
+@28
+TOP.orion_soc.core.fetch_stg.pc_stall
+@22
+TOP.orion_soc.core.fetch_stg.pc_next[31:0]
+@c00022
+[color] 2
+TOP.orion_soc.core.fetch_stg.pc[31:0]
+@28
+(0)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(1)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(2)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(3)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(4)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(5)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(6)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(7)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(8)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(9)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(10)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(11)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(12)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(13)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(14)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(15)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(16)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(17)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(18)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(19)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(20)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(21)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(22)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(23)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(24)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(25)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(26)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(27)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(28)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(29)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(30)TOP.orion_soc.core.fetch_stg.pc[31:0]
+(31)TOP.orion_soc.core.fetch_stg.pc[31:0]
+@1401200
+-group_end
 @22
 TOP.orion_soc.core.fetch_stg.imem_addr_o[31:0]
-@28
-TOP.orion_soc.core.fetch_stg.imem_valid_o
-@22
 TOP.orion_soc.core.fetch_stg.imem_rdata_i[31:0]
 @28
+TOP.orion_soc.core.fetch_stg.imem_valid_o
 TOP.orion_soc.core.fetch_stg.imem_resp_i
+TOP.orion_soc.core.fetch_stg.if_id_o.valid
+@4022
+^>1 /home/saursin/work/orion/scripts/rvdism.py
+TOP.orion_soc.core.fetch_stg.if_id_o.instr[31:0]
+@22
+TOP.orion_soc.core.fetch_stg.if_id_o.instr[31:0]
+TOP.orion_soc.mem_addr_i[31:0]
 @200
 -DECODE
 @22
 TOP.orion_soc.core.decode_stg.instr[31:0]
+@200
+-EXECUTE
+@22
+TOP.orion_soc.core.execute_stg.id_ex_i.debug.instr[31:0]
+TOP.orion_soc.core.execute_stg.dmem_addr_o[31:0]
+TOP.orion_soc.core.execute_stg.dmem_mask_o[3:0]
+@28
+TOP.orion_soc.core.execute_stg.dmem_valid_o
+@22
+TOP.orion_soc.core.execute_stg.dmem_wdata_o[31:0]
+@28
+TOP.orion_soc.core.execute_stg.dmem_we_o
+@200
+-MEM
+@22
+TOP.orion_soc.core.memory_stg.dmem_rdata_i[31:0]
+@28
+TOP.orion_soc.core.memory_stg.dmem_resp_i
+@200
+-ARBITER
+@29
+TOP.orion_soc.arb.request[1:0]
+@28
+[color] 3
+TOP.orion_soc.arb.grant[0]
+@100000028
+TOP.orion_soc.arb.arb_state
+@200
+-SOC_MEMORY
+@22
+TOP.orion_soc.mem_addr_i[31:0]
+TOP.orion_soc.mem_addr_aligned[31:0]
+TOP.orion_soc.mem_mask_i[3:0]
+TOP.orion_soc.mem_rdata_o[31:0]
+@28
+TOP.orion_soc.mem_resp_o
+TOP.orion_soc.mem_valid_i
+@22
+TOP.orion_soc.mem_wdata_i[31:0]
+@28
+TOP.orion_soc.mem_we_i
+TOP.orion_soc.core.execute_stg.dmem_valid_o
 [pattern_trace] 1
 [pattern_trace] 0

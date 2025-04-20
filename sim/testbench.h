@@ -9,6 +9,8 @@
 #include <verilated_vcd_c.h>
 #endif
 
+#define TIMESCALE 10
+
 /*
     A generic testbench class that instantiates the dut, and provides
     methods to control and trace the simulation.
@@ -95,8 +97,9 @@ bool Testbench<VTop>::finished() {
 }
 
 template <class VTop>
-void Testbench<VTop>::reset(int ncycles) {
+void Testbench<VTop>::reset(int ncycles) {   
     cycles_ = 0;
+    *sig_clk_ = 0;
     *sig_rst_ = 1;
     for(int i = 0; i < ncycles; i++) {
         tick();
@@ -108,7 +111,8 @@ template <class VTop>
 void Testbench<VTop>::tick() {
     // Increment our own internal time reference
     cycles_++;
-
+    Verilated::timeInc(TIMESCALE);
+    
     // Make sure any combinatorial logic depending upon
     // inputs that may have changed before we called tick()
     // has settled before the rising edge of the clock.

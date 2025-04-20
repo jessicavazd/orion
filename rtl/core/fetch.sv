@@ -61,8 +61,13 @@ import orion_types::*;
     end
 
     always_ff @(posedge clk_i) begin
-        if(!pc_stall)
+        if (rst_i) begin
+            pc <= PC_RESET_ADDR;
+        end
+        else begin
+           if(!pc_stall)
             pc <= pc_next;
+        end
     end
 
     // Send addr to I$ in current cycle

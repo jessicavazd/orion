@@ -8,6 +8,9 @@ BUILD_DIR?= build
 # Enable debug build
 DEBUG?= 0
 
+# Enable SV Assertions
+EN_SVASSERT?= 1
+
 # Trace format (vcd/fst)
 TRACE_FORMAT?= fst
 
@@ -74,6 +77,12 @@ else
     CXXFLAGS += -O2 -DNDEBUG
 endif
 
+# SV Assertions
+ifeq ($(EN_SVASSERT), 1)
+    $(info "SV Assertions enabled")
+    VFLAGS += --assert
+endif
+
 # Trace format
 ifeq ($(TRACE_FORMAT), vcd)
     VFLAGS += --trace
@@ -117,9 +126,16 @@ $(VERILATED_DIR)/V$(VTOP)__ALL.a: $(VSRCS)
 
 	
 # C++ obj <- C++ src (in current dir)
-$(OBJ_DIR)/%.o: %.cc $(VERILATED_DIR)/V$(VTOP)__ALL.a
+$(OBJ_DIR)/%.o: %.cc $(VERILATED_DIR)/V$(VTOP)__ALL.a testbench.h
 	@echo -e "$(CLR_BL)[+] Compiling $@$(CLR_NC)"
 	$(CC) $(CXXFLAGS) -c $< -o $@
+
+
+.PHONY: iverilog
+iverilog: $(VSRCS)
+	@echo -e "$(CLR_BL)[+] Generating iverilog sources$(CLR_NC)"
+	iverilog -g2012 -o $(BIN_DIR)/orionsim_iverilog $(VSRCS) -I$(ORION_HOME)/rtl/common
+ 
 
 
 .PHONY: lint

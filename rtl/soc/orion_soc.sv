@@ -104,11 +104,9 @@ import orion_soc_types::*;
     logic [XLEN-1:0] mem_addr_aligned;
     assign mem_addr_aligned = mem_addr_i - SOC_MEM_ADDR; 
     
-    always_comb begin
-        if (!((mem_addr_i >= SOC_MEM_ADDR) && (mem_addr_i < (SOC_MEM_ADDR + SOC_MEM_SIZE)))) begin
-            $error("Illegal memory access: %h", mem_addr_i);
-        end
-    end
+    assert property (@(posedge clk_i) disable iff (rst_i) 
+        mem_valid_i |-> ((mem_addr_i >= SOC_MEM_ADDR) && (mem_addr_i < (SOC_MEM_ADDR + SOC_MEM_SIZE))))
+        else $error("[%0t] Illegal memory access: valid=%b, addr=0x%0h", $time, mem_valid_i, mem_addr_i);
 
     spram #(
         .SIZE       (SOC_MEM_SIZE),

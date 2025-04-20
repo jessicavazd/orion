@@ -59,7 +59,9 @@ import orion_types::*;
 
     ////////////////////////////////////////////////////////////////////////////
     // Fetch stage
-    fetch  fetch_stg (
+    fetch #(
+        .PC_RESET_ADDR (PC_RESET_ADDR)
+    ) fetch_stg (
         .clk_i          (clk_i),
         .rst_i          (rst_i),
 

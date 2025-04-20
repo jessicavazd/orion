@@ -4,4 +4,6 @@ package orion_soc_types;
 
     parameter SOC_MEM_ADDR = 32'h0001_0000;
     parameter SOC_MEM_SIZE = 64*1024;       // 64KB
+
+    parameter SOC_RESET_ADDR = SOC_MEM_ADDR;
 endpackage
