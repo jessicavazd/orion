@@ -71,7 +71,7 @@ LDFLAGS:= -L$(VERILATED_DIR) -l:V$(VTOP)__ALL.a -lverilated
 
 # Debugging options
 ifeq ($(DEBUG), 1)
-	$(info "Debug build enabled")
+	$(info Debug build enabled)
     CXXFLAGS += -g -O0 -DDEBUG
 else
     CXXFLAGS += -O2 -DNDEBUG
@@ -79,7 +79,7 @@ endif
 
 # SV Assertions
 ifeq ($(EN_SVASSERT), 1)
-    $(info "SV Assertions enabled")
+    $(info SV Assertions enabled)
     VFLAGS += --assert
 endif
 

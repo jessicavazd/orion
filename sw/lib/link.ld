@@ -21,4 +21,8 @@ SECTIONS
     .data : {
         *(.data .data.*)
     } > RAM
+
+    /* Spike sections */
+    .tohost : { *(.tohost) } > RAM
+    .fromhost : { *(.fromhost) } > RAM
 }

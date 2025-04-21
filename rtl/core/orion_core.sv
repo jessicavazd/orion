@@ -17,6 +17,7 @@ import orion_types::*;
     input  logic [XLEN-1:0]     imem_rdata_i,
     output logic                imem_valid_o,
     input  logic                imem_resp_i,
+    // input  logic                imem_stall_i,
 
     // D$ interface
     output logic [ADDRW-1:0]    dmem_addr_o,
@@ -26,6 +27,7 @@ import orion_types::*;
     output logic                dmem_we_o,
     output logic                dmem_valid_o,
     input  logic                dmem_resp_i
+    // input  logic                dmem_stall_i
 );
     // Interfaces
     if_id_t  if_id, if_id_reg;
@@ -185,10 +187,10 @@ import orion_types::*;
 
     ////////////////////////////////////////////////////////////////////////////
     // Stall logic
-    assign if_pc_stall  = mem_stall_o;
+    assign if_pc_stall  = if_id_stall /*|| imem_stall_i*/;
 
-    assign if_id_stall  = mem_stall_o;
-    assign id_ex_stall  = mem_stall_o;
+    assign if_id_stall  = id_ex_stall;
+    assign id_ex_stall  = ex_mem_stall /*|| dmem_stall_i*/;
     assign ex_mem_stall = mem_stall_o;
     assign mem_wb_stall = 1'b0;
 

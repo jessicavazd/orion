@@ -8,6 +8,9 @@ module arbiter#(
     input   logic                       clk_i,
     input   logic                       rst_i,
 
+    // stall signal
+    output  logic [NPORTS-1:0]          stall_o,
+
     // Slave ports (bundled)
     input   logic [NPORTS*ADDRW-1:0]    slave_addr_i,
     output  logic [NPORTS*DATAW-1:0]    slave_rdata_o,
@@ -77,6 +80,15 @@ module arbiter#(
     
     // If there is a request, assign grant combinatorially otherwise maintian the previous grant
     assign grant = arb_state == IDLE && request_valid  ? grant_comb : grant_reg;
+
+
+    // Grant encoded
+    logic [NPORTS-1:0] grant_encoded;
+    assign grant_encoded = 1 << grant;
+
+
+    // Stall signal
+    assign stall_o = request & ~grant_encoded;
 
     // Arbitration Muxes S[i] -> M
     always_comb begin

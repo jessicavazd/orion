@@ -29,6 +29,7 @@ import orion_soc_types::*;
     logic [DATAW-1:0]    imem_rdata_i;
     logic                imem_valid_o;
     logic                imem_resp_i;
+//   logic                imem_stall_i;
 
     logic [ADDRW-1:0]    dmem_addr_o;
     logic [DATAW-1:0]    dmem_rdata_i;
@@ -37,6 +38,7 @@ import orion_soc_types::*;
     logic                dmem_we_o;
     logic                dmem_valid_o;
     logic                dmem_resp_i;
+//    logic                dmem_stall_i;
 
     orion_core #(
         .PC_RESET_ADDR (SOC_RESET_ADDR)
@@ -48,6 +50,7 @@ import orion_soc_types::*;
         .imem_rdata_i   (imem_rdata_i),
         .imem_valid_o   (imem_valid_o),
         .imem_resp_i    (imem_resp_i),
+//        .imem_stall_i   (imem_stall_i),
         
         .dmem_addr_o    (dmem_addr_o),
         .dmem_rdata_i   (dmem_rdata_i),
@@ -56,74 +59,109 @@ import orion_soc_types::*;
         .dmem_we_o      (dmem_we_o),
         .dmem_valid_o   (dmem_valid_o),
         .dmem_resp_i    (dmem_resp_i)
+//        .dmem_stall_i   (dmem_stall_i)
     );
 
 
     ////////////////////////////////////////////////////////////////////////////
     // Arbiter
-    logic [ADDRW-1:0] mem_addr_i;
-    logic [DATAW-1:0] mem_rdata_o;
-    logic [DATAW-1:0] mem_wdata_i;
-    logic [MASKW-1:0] mem_mask_i;
-    logic             mem_we_i;
-    logic             mem_valid_i;
-    logic             mem_resp_o;
+    // logic [ADDRW-1:0] mem_addr_i;
+    // logic [DATAW-1:0] mem_rdata_o;
+    // logic [DATAW-1:0] mem_wdata_i;
+    // logic [MASKW-1:0] mem_mask_i;
+    // logic             mem_we_i;
+    // logic             mem_valid_i;
+    // logic             mem_resp_o;
     
-    arbiter #(
-        .NPORTS    (2),
-        .ADDRW     (ADDRW),
-        .DATAW     (DATAW),
-        .MASKW     (MASKW)
-    ) arb (
-        .clk_i          (clk_i),
-        .rst_i          (rst_i),
+    // arbiter #(
+    //     .NPORTS    (2),
+    //     .ADDRW     (ADDRW),
+    //     .DATAW     (DATAW),
+    //     .MASKW     (MASKW)
+    // ) arb (
+    //     .clk_i          (clk_i),
+    //     .rst_i          (rst_i),
 
-        // Slave ports
-        .slave_addr_i   ({ imem_addr_o,    dmem_addr_o}),
-        .slave_rdata_o  ({ imem_rdata_i,   dmem_rdata_i}),
-        .slave_wdata_i  ({ {DATAW{1'b0}},  dmem_wdata_o}),
-        .slave_mask_i   ({ {MASKW{1'b1}},  dmem_mask_o}),
-        .slave_we_i     ({ 1'b0,           dmem_we_o}),
-        .slave_valid_i  ({ imem_valid_o,   dmem_valid_o}),
-        .slave_resp_o   ({ imem_resp_i,    dmem_resp_i}),
+    //     .stall_o        ({ imem_stall_i, dmem_stall_i }),
 
-        // Master port
-        .master_addr_o  (mem_addr_i),
-        .master_rdata_i (mem_rdata_o),
-        .master_wdata_o (mem_wdata_i),
-        .master_mask_o  (mem_mask_i),
-        .master_we_o    (mem_we_i),
-        .master_valid_o (mem_valid_i),
-        .master_resp_i  (mem_resp_o)
-    );
+    //     // Slave ports
+    //     .slave_addr_i   ({ imem_addr_o,    dmem_addr_o}),
+    //     .slave_rdata_o  ({ imem_rdata_i,   dmem_rdata_i}),
+    //     .slave_wdata_i  ({ {DATAW{1'b0}},  dmem_wdata_o}),
+    //     .slave_mask_i   ({ {MASKW{1'b1}},  dmem_mask_o}),
+    //     .slave_we_i     ({ 1'b0,           dmem_we_o}),
+    //     .slave_valid_i  ({ imem_valid_o,   dmem_valid_o}),
+    //     .slave_resp_o   ({ imem_resp_i,    dmem_resp_i}),
+
+    //     // Master port
+    //     .master_addr_o  (mem_addr_i),
+    //     .master_rdata_i (mem_rdata_o),
+    //     .master_wdata_o (mem_wdata_i),
+    //     .master_mask_o  (mem_mask_i),
+    //     .master_we_o    (mem_we_i),
+    //     .master_valid_o (mem_valid_i),
+    //     .master_resp_i  (mem_resp_o)
+    // );
     
   
     ////////////////////////////////////////////////////////////////////////////
     // Memory
 
-    logic [XLEN-1:0] mem_addr_aligned;
-    assign mem_addr_aligned = mem_addr_i - SOC_MEM_ADDR; 
+    // logic [XLEN-1:0] mem_addr_aligned;
+    // assign mem_addr_aligned = mem_addr_i - SOC_MEM_ADDR; 
     
     assert property (@(posedge clk_i) disable iff (rst_i) 
-        mem_valid_i |-> ((mem_addr_i >= SOC_MEM_ADDR) && (mem_addr_i < (SOC_MEM_ADDR + SOC_MEM_SIZE))))
-        else $error("[%0t] Illegal memory access: valid=%b, addr=0x%0h", $time, mem_valid_i, mem_addr_i);
+        imem_valid_o |-> ((imem_addr_o >= SOC_MEM_ADDR) && (imem_addr_o < (SOC_MEM_ADDR + SOC_MEM_SIZE))))
+        else $error("[%0t] Illegal memory access: valid=%b, addr=0x%0h", $time, imem_valid_o, imem_addr_o);
 
-    spram #(
+    assert property (@(posedge clk_i) disable iff (rst_i) 
+        dmem_valid_o |-> ((dmem_addr_o >= SOC_MEM_ADDR) && (dmem_addr_o < (SOC_MEM_ADDR + SOC_MEM_SIZE))))
+        else $error("[%0t] Illegal memory access: valid=%b, addr=0x%0h", $time, dmem_valid_o, dmem_addr_o);
+
+    // spram #(
+    //     .SIZE       (SOC_MEM_SIZE),
+    //     .DATAW      (XLEN),
+    //     .EN_PIPE    (1),
+    //     .INIT_FILE  (`MEM_INIT_FILE)
+    // ) memory (
+    //     .clk_i      (clk_i),
+    //     .rst_i      (rst_i),
+    //     .addr_i     (mem_addr_aligned[$clog2(SOC_MEM_SIZE)-1:0]),
+    //     .data_i     (mem_wdata_i),
+    //     .data_o     (mem_rdata_o),
+    //     .mask_i     (mem_mask_i),
+    //     .we_i       (mem_we_i),
+    //     .valid_i    (mem_valid_i),
+    //     .resp_o     (mem_resp_o)
+    // );
+
+
+    dpram # (
         .SIZE       (SOC_MEM_SIZE),
         .DATAW      (XLEN),
         .EN_PIPE    (1),
         .INIT_FILE  (`MEM_INIT_FILE)
     ) memory (
-        .clk_i      (clk_i),
-        .rst_i      (rst_i),
-        .addr_i     (mem_addr_aligned[$clog2(SOC_MEM_SIZE)-1:0]),
-        .data_i     (mem_wdata_i),
-        .data_o     (mem_rdata_o),
-        .mask_i     (mem_mask_i),
-        .we_i       (mem_we_i),
-        .valid_i    (mem_valid_i),
-        .resp_o     (mem_resp_o)
+        .clk_i(clk_i),
+        .rst_i(rst_i),
+
+        // Read port
+        .p0_addr_i(imem_addr_o[$clog2(SOC_MEM_SIZE)-1:0]),
+        .p0_data_o(imem_rdata_i),
+        .p0_valid_i(imem_valid_o),
+        .p0_resp_o(imem_resp_i),
+
+        // Read-Write port
+        .p1_addr_i  (dmem_addr_o[$clog2(SOC_MEM_SIZE)-1:0]),
+        .p1_data_i  (dmem_wdata_o),
+        .p1_data_o  (dmem_rdata_i),
+        .p1_mask_i  (dmem_mask_o),
+        .p1_we_i    (dmem_we_o),
+        .p1_valid_i (dmem_valid_o),
+        .p1_resp_o  (dmem_resp_i)
     );
 
-    `UNUSED_VAR(mem_addr_aligned)
+    // `UNUSED_VAR(mem_addr_aligned)
+    `UNUSED_VAR(imem_addr_o)
+    `UNUSED_VAR(dmem_addr_o)
 endmodule
