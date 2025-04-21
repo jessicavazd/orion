@@ -1,3 +1,9 @@
+CLR_RD := \033[0;31m
+CLR_GR := \033[0;32m
+CLR_CY := \033[0;36m
+CLR_BL := \033[34m
+CLR_NC := \033[0m
+
 ifeq ($(ORION_HOME), )
     $(error "ORION_HOME environment variable not set, did you source the sourceme script?")
 endif
@@ -42,6 +48,21 @@ $(BUILD_DIR)/$(EXEC): $(SRCS)
 run: $(BUILD_DIR)/$(EXEC)
 	@echo "Running $(EXEC)"
 	orionsim $(ORIONSIM_FLAGS) $(basename $<).hex
+
+
+.PHONY: run-verify
+run-verify: $(BUILD_DIR)/$(EXEC)
+	@echo "Running $(EXEC) with spike verification"
+	spike --isa=rv32i -m0x10000:0x10000 --log-commits $(BUILD_DIR)/$(EXEC) |& tail -n +6 > $(BUILD_DIR)/spike.log
+	orionsim $(ORIONSIM_FLAGS) --log $(BUILD_DIR)/orionsim.log --log-format spike $(basename $<).hex
+	@echo "Comparing logs"
+	diff -y -W 260 $(BUILD_DIR)/spike.log $(BUILD_DIR)/orionsim.log > run_diff && echo -e "$(CLR_GR)[+] Verification Success$(CLR_NC)" || \
+	{ echo -e "$(CLR_RD)[!] Verification failed$(CLR_NC)"; exit 1; }
+# diff --side-by-side $(BUILD_DIR)/spike.log $(BUILD_DIR)/orionsim.log | awk '{ printf "%-80.80s %-80.80s\n", substr($0,1,80), substr($0,82) }'
+
+
+# $(ORION_HOME)/scripts/spike-log-diff.py $(BUILD_DIR)/spike.log $(BUILD_DIR)/orionsim.log
+
 
 .PHONY: clean
 clean:

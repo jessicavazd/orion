@@ -59,15 +59,20 @@ assign mem_id_o.rd_v    = mem_wb_o.rd_v;
 
 `ifndef SYNTHESIS
     // Debug signals
-    assign mem_wb_o.debug.instr  = ex_mem_i.debug.instr;
-    assign mem_wb_o.debug.pc     = ex_mem_i.debug.pc;
-    assign mem_wb_o.debug.rs1_s  = ex_mem_i.debug.rs1_s;
-    assign mem_wb_o.debug.rs2_s  = ex_mem_i.debug.rs2_s;
-    assign mem_wb_o.debug.rd_s   = ex_mem_i.debug.rd_s;
-    assign mem_wb_o.debug.rs1_v  = ex_mem_i.debug.rs1_v;
-    assign mem_wb_o.debug.rs2_v  = ex_mem_i.debug.rs2_v;
-    assign mem_wb_o.debug.rd_v   = 'x;
-    assign mem_wb_o.debug.rd_we  = 'x;
+    assign mem_wb_o.debug.instr     = ex_mem_i.debug.instr;
+    assign mem_wb_o.debug.pc        = ex_mem_i.debug.pc;
+    assign mem_wb_o.debug.rs1_s     = ex_mem_i.debug.rs1_s;
+    assign mem_wb_o.debug.rs2_s     = ex_mem_i.debug.rs2_s;
+    assign mem_wb_o.debug.rd_s      = ex_mem_i.debug.rd_s;
+    assign mem_wb_o.debug.rs1_v     = ex_mem_i.debug.rs1_v;
+    assign mem_wb_o.debug.rs2_v     = ex_mem_i.debug.rs2_v;
+    assign mem_wb_o.debug.rd_v      = 'x;
+    assign mem_wb_o.debug.rd_we     = 'x;
+    assign mem_wb_o.debug.mem_addr  = ex_mem_i.debug.mem_addr;
+    assign mem_wb_o.debug.mem_rmask = ex_mem_i.debug.mem_rmask;
+    assign mem_wb_o.debug.mem_wmask = ex_mem_i.debug.mem_wmask;
+    assign mem_wb_o.debug.mem_wdata = ex_mem_i.debug.mem_wdata;
+    assign mem_wb_o.debug.mem_rdata = dmem_rdata_i;
 `endif
 
 `UNUSED_VAR(mem_addr);

@@ -128,6 +128,11 @@ typedef struct packed {
     logic [XLEN-1:0]        rs2_v;
     logic [XLEN-1:0]        rd_v;
     logic                   rd_we;
+    logic [ADDRW-1:0]       mem_addr;      
+    logic [MASKW-1:0]       mem_rmask;   
+    logic [MASKW-1:0]       mem_wmask;      
+    logic [XLEN-1:0]        mem_rdata;      
+    logic [XLEN-1:0]        mem_wdata;     
 } debug_t;
 
 

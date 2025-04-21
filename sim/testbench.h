@@ -120,29 +120,28 @@ void Testbench<VTop>::tick() {
     dut_->eval();
 
     //  Dump values to our trace file before clock edge
-    if(is_trace_open()) {
-        trace_->dump(10*cycles_-2);
-    }
+    if(trace_) 
+        trace_->dump(TIMESCALE*cycles_-1);
 
     // ---------- Toggle the clock ------------
 
     // Rising edge
-    *sig_clk_ = 1;
+    *sig_clk_ = 1;  
     dut_->eval();
 
     //  Dump values to our trace file after clock edge
-    if(is_trace_open()) 
-        trace_->dump(10*cycles_);
+    if(trace_)
+        trace_->dump(TIMESCALE*cycles_);
 
     // Falling edge
     *sig_clk_ = 0;
     dut_->eval();
-
+    
     if (trace_) {
         // This portion, though, is a touch different.
         // After dumping our values as they exist on the
         // negative clock edge ...
-        trace_->dump(10*cycles_+5);
+        trace_->dump(TIMESCALE*cycles_+(TIMESCALE/2));
         //
         // We'll also need to make sure we flush any I/O to
         // the trace file, so that we can use the assert()

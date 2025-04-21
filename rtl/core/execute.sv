@@ -151,15 +151,20 @@ assign ex_id_o.is_load      = ex_mem_o.is_load; // For load-use hazard detection
 
 `ifndef SYNTHESIS
     // Debug signals
-    assign ex_mem_o.debug.instr  = id_ex_i.debug.instr;
-    assign ex_mem_o.debug.pc     = id_ex_i.debug.pc;
-    assign ex_mem_o.debug.rs1_s  = id_ex_i.debug.rs1_s;
-    assign ex_mem_o.debug.rs2_s  = id_ex_i.debug.rs2_s;
-    assign ex_mem_o.debug.rd_s   = id_ex_i.debug.rd_s;
-    assign ex_mem_o.debug.rs1_v  = id_ex_i.debug.rs1_v;
-    assign ex_mem_o.debug.rs2_v  = id_ex_i.debug.rs2_v;
-    assign ex_mem_o.debug.rd_v   = 'x;
-    assign ex_mem_o.debug.rd_we  = 'x;
+    assign ex_mem_o.debug.instr     = id_ex_i.debug.instr;
+    assign ex_mem_o.debug.pc        = id_ex_i.debug.pc;
+    assign ex_mem_o.debug.rs1_s     = id_ex_i.debug.rs1_s;
+    assign ex_mem_o.debug.rs2_s     = id_ex_i.debug.rs2_s;
+    assign ex_mem_o.debug.rd_s      = id_ex_i.debug.rd_s;
+    assign ex_mem_o.debug.rs1_v     = id_ex_i.debug.rs1_v;
+    assign ex_mem_o.debug.rs2_v     = id_ex_i.debug.rs2_v;
+    assign ex_mem_o.debug.rd_v      = 'x;
+    assign ex_mem_o.debug.rd_we     = 'x;
+    assign ex_mem_o.debug.mem_addr  = dmem_addr_o;      
+    assign ex_mem_o.debug.mem_rmask = {MASKW{dmem_valid_o && !dmem_we_o}} & dmem_mask_o;
+    assign ex_mem_o.debug.mem_wmask = {MASKW{dmem_valid_o &&  dmem_we_o}} & dmem_mask_o;
+    assign ex_mem_o.debug.mem_rdata = 'x;
+    assign ex_mem_o.debug.mem_wdata = dmem_wdata_o;  
 `endif
 
 `UNUSED_VAR(mem_addr);

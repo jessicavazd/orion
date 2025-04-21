@@ -254,15 +254,20 @@ import orion_types::*;
 
 `ifndef SYNTHESIS
     // Debug signals
-    assign id_ex_o.debug.instr  = instr;
-    assign id_ex_o.debug.pc     = if_id_i.pc;
-    assign id_ex_o.debug.rs1_s  = rs1_s;
-    assign id_ex_o.debug.rs2_s  = rs2_s;
-    assign id_ex_o.debug.rd_s   = rd_s;
-    assign id_ex_o.debug.rs1_v  = rs1_v_fwd;
-    assign id_ex_o.debug.rs2_v  = rs2_v_fwd;
-    assign id_ex_o.debug.rd_v   = 'x;
-    assign id_ex_o.debug.rd_we  = 'x;
+    assign id_ex_o.debug.instr     = instr;
+    assign id_ex_o.debug.pc        = if_id_i.pc;
+    assign id_ex_o.debug.rs1_s     = rs1_s;
+    assign id_ex_o.debug.rs2_s     = rs2_s;
+    assign id_ex_o.debug.rd_s      = rd_s;
+    assign id_ex_o.debug.rs1_v     = rs1_v_fwd;
+    assign id_ex_o.debug.rs2_v     = rs2_v_fwd;
+    assign id_ex_o.debug.rd_v      = 'x;
+    assign id_ex_o.debug.rd_we     = 'x;
+    assign id_ex_o.debug.mem_addr  = 'x;      
+    assign id_ex_o.debug.mem_rmask = 'x; 
+    assign id_ex_o.debug.mem_wmask = 'x;        
+    assign id_ex_o.debug.mem_rdata = 'x;      
+    assign id_ex_o.debug.mem_wdata = 'x;
 `endif
 
     `UNUSED_VAR(funct7)

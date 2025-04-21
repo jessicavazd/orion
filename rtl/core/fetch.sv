@@ -55,8 +55,11 @@ import orion_types::*;
         else if(ex_if_i.jump_en) begin
             pc_next = ex_if_i.jump_addr;
         end 
-        else begin
+        else if (!pc_stall) begin
             pc_next = pc + 'd4;
+        end
+        else begin
+            pc_next = pc;
         end
     end
 
@@ -65,7 +68,6 @@ import orion_types::*;
             pc <= PC_RESET_ADDR;
         end
         else begin
-           if(!pc_stall)
             pc <= pc_next;
         end
     end

@@ -46,16 +46,21 @@ public:
         tb->register_rst((bool*)&tb->dut_->rst_i);
 
         // Setup scope pointers
-        signal_ptrs.instr_valid = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_valid;
+        signal_ptrs.instr_valid = (bool*)&tb->dut_->orion_soc->core->writeback_stg->dbg_valid;
         signal_ptrs.instr       = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_instr;
         signal_ptrs.pc          = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_pc;
-        signal_ptrs.rs1_s       = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rs1_s;
-        signal_ptrs.rs2_s       = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rs2_s;
-        signal_ptrs.rd_s        = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rd_s;
+        signal_ptrs.rs1_s       = (uint8_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rs1_s;
+        signal_ptrs.rs2_s       = (uint8_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rs2_s;
+        signal_ptrs.rd_s        = (uint8_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rd_s;
         signal_ptrs.rs1_v       = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rs1_v;
         signal_ptrs.rs2_v       = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rs2_v;
         signal_ptrs.rd_v        = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rd_v;
-        signal_ptrs.rd_we       = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rd_we;
+        signal_ptrs.rd_we       = (bool*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rd_we;
+        signal_ptrs.mem_addr    = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_mem_addr;
+        signal_ptrs.mem_rmask   = (uint8_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_mem_rmask;
+        signal_ptrs.mem_wmask   = (uint8_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_mem_wmask;
+        signal_ptrs.mem_rdata   = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_mem_rdata;
+        signal_ptrs.mem_wdata   = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_mem_wdata;
     }
 
     ~OrionSim() {
@@ -193,12 +198,36 @@ public:
     }
 
     void sim_log() {
-        fprintf(log_f, "[%8lu] %s ", tb->get_cycles(), *signal_ptrs.instr_valid ? "       " : "INVALID");
-
-        fprintf(log_f, "PC: 0x%08x, Instr: 0x%08x, ", *signal_ptrs.pc, *signal_ptrs.instr);
-        fprintf(log_f, "rd: (x%-2d: 0x%08x, we: %d), ", *signal_ptrs.rd_s & 0x1f, *signal_ptrs.rd_v, *signal_ptrs.rd_we);
-        fprintf(log_f, "rs1: (x%-2d: 0x%08x), ", *signal_ptrs.rs1_s & 0x1f, *signal_ptrs.rs1_v);
-        fprintf(log_f, "rs2: (x%-2d: 0x%08x) ", *signal_ptrs.rs2_s & 0x1f, *signal_ptrs.rs2_v);
+        if (log_format == "spike") {
+            if(! *signal_ptrs.instr_valid) {
+                return; // skip bubbles
+            }
+            /*
+            Spike format:
+                default:    core  {core_id}: <priv> <pc> (<instr>)
+                reg update: core  {core_id}: <priv> <pc> (<instr>) <rd> <new_value>
+                store;      core  {core_id}: <priv> <pc> (<instr>) mem <store_target_address> <data_to_store>
+                load;       core  {core_id}: <priv> <pc> (<instr>) rd <loaded_data> mem <load_target_address>
+            */
+            fprintf(log_f, "core   0: 3 0x%08x (0x%08x)", *signal_ptrs.pc, *signal_ptrs.instr);
+            if((*signal_ptrs.rd_we & 0x1) && ((*signal_ptrs.rd_s & 0x1f) != 0)) {
+                fprintf(log_f, " x%-2d 0x%08x", *signal_ptrs.rd_s & 0x1f, *signal_ptrs.rd_v);
+            } 
+            else if(*signal_ptrs.mem_wmask & 0xf) {
+                // mem <store_target_address> <data_to_store>
+                fprintf(log_f, " mem 0x%08x 0x%08x", *signal_ptrs.mem_addr, *signal_ptrs.mem_wdata);
+            }
+            else if(*signal_ptrs.mem_rmask & 0xf) {
+                // rd <loaded_data> mem <load_target_address>
+                fprintf(log_f, " r%-2d 0x%08x mem 0x%08x", *signal_ptrs.rd_s & 0x1f, *signal_ptrs.mem_rdata, *signal_ptrs.mem_addr);
+            }
+        } else {
+            fprintf(log_f, "[%8lu] %s ", tb->get_cycles(), *signal_ptrs.instr_valid ? "       " : "INVALID");
+            fprintf(log_f, "PC: 0x%08x, Instr: 0x%08x, ", *signal_ptrs.pc, *signal_ptrs.instr);
+            fprintf(log_f, "rd: (x%-2d: 0x%08x, we: %d), ", *signal_ptrs.rd_s & 0x1f, *signal_ptrs.rd_v, *signal_ptrs.rd_we);
+            fprintf(log_f, "rs1: (x%-2d: 0x%08x), ", *signal_ptrs.rs1_s & 0x1f, *signal_ptrs.rs1_v);
+            fprintf(log_f, "rs2: (x%-2d: 0x%08x) ", *signal_ptrs.rs2_s & 0x1f, *signal_ptrs.rs2_v);
+        }
         fprintf(log_f, "\n");
         fflush(log_f);
     }
@@ -213,25 +242,43 @@ public:
         }
     }
 
+    void set_log_format(const std::string &format) {
+        // Set the log format
+        SIMLOG("Setting log format to: %s\n", format.c_str());
+        if(format == "spike") {
+            log_format = "spike";
+        } else if(format == "default") {
+            log_format = "default";
+        } else {
+            fprintf(stderr, "Error: Unknown log format: %s\n", format.c_str());
+            return;
+        }
+    }
 
 private:
     Testbench<Vorion_soc> *tb;
     uint64_t max_cycles = 100000;
 
     struct {
-        uint32_t *instr_valid;
+        bool *instr_valid;
         uint32_t *instr;
         uint32_t *pc;
-        uint32_t *rs1_s;
-        uint32_t *rs2_s;
-        uint32_t *rd_s;
+        uint8_t *rs1_s;
+        uint8_t *rs2_s;
+        uint8_t *rd_s;
         uint32_t *rs1_v;
         uint32_t *rs2_v;
         uint32_t *rd_v;
-        uint32_t *rd_we;
+        bool *rd_we;
+        uint32_t *mem_addr;
+        uint8_t *mem_rmask;
+        uint8_t *mem_wmask;
+        uint32_t *mem_rdata;
+        uint32_t *mem_wdata;
     } signal_ptrs;
 
     FILE *log_f = nullptr;
+    std::string log_format = "default";
 };
 
 
@@ -243,6 +290,7 @@ int main(int argc, char** argv) {
     parser.add_argument({"-t", "--trace"}, "Enable trace", ArgParse::ArgType_t::BOOL, "false");
     parser.add_argument({"--trace-file"}, "Specify a trace file (Trace type: " TRACE_TYPE_STR ")", ArgParse::ArgType_t::STR, TRACE_FILE);
     parser.add_argument({"-l", "--log"}, "Enable simulation log", ArgParse::ArgType_t::STR);
+    parser.add_argument({"--log-format"}, "Specify log format (choices: spike, default)", ArgParse::ArgType_t::STR);
     parser.add_argument({"--dump-mem"}, "Dump memory contents to a file after simulation finishes", ArgParse::ArgType_t::STR);
 
     if(parser.parse_args(argc, argv) != 0) {
@@ -260,10 +308,17 @@ int main(int argc, char** argv) {
         sim.open_trace(trace_file);
     }
 
+    // Enable simulation log
     if(opt_args.count("log") > 0) {
         std::string log_file = opt_args["log"].value.as_str;
         sim.open_log(log_file);
     }
+
+    // Set log format
+    if(opt_args.count("log_format") > 0) {
+        std::string log_format = opt_args["log_format"].value.as_str;
+        sim.set_log_format(log_format);
+    }  
 
     // Set maximum cycles
     if(opt_args.count("max_cycles") > 0) {
