@@ -72,7 +72,7 @@ assign mem_id_o.rd_v    = mem_wb_o.rd_v;
     assign mem_wb_o.debug.mem_rmask = ex_mem_i.debug.mem_rmask;
     assign mem_wb_o.debug.mem_wmask = ex_mem_i.debug.mem_wmask;
     assign mem_wb_o.debug.mem_wdata = ex_mem_i.debug.mem_wdata;
-    assign mem_wb_o.debug.mem_rdata = dmem_rdata_i;
+    assign mem_wb_o.debug.mem_rdata = mem_rdata;
 `endif
 
 `UNUSED_VAR(mem_addr);

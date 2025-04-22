@@ -9,8 +9,10 @@
 
 #include "Vorion_soc_headers.h"
 
-// #define MEM_ADDR 0x00000000
+#define MEM_ADDR 0x00010000
 #define MEM_SIZE (64*1024)  // 64KB
+
+#define CONSOLE_ADDR (MEM_ADDR + MEM_SIZE - 0x4)
 
 #define RESET_CYCLES 2
 
@@ -29,9 +31,25 @@
 #endif
 
 std::string banner = 
-"==========================\n"
-" OrionSim \n"
-"==========================\n";
+"  ____       _              _____ _\n"
+" / __ \\     (_)            / ____(_)\n"
+"| |  | |_ __ _  ___  _ __ | (___  _ _ __ ___\n"
+"| |  | | '__| |/ _ \\| '_ \\ \\___ \\| | '_ ` _ \\ \n"
+"| |__| | |  | | (_) | | | |____) | | | | | | |\n"
+" \\____/|_|  |_|\\___/|_| |_|_____/|_|_| |_| |_|\n"
+"==================================================\n";
+
+std::string get_masked_hexstr(uint32_t data, uint8_t mask) {
+    char buf[9] = {}; // Up to 4 bytes * 2 hex digits = 8 + null terminator
+    int offset = 0;
+    for (int i = 3; i >= 0; i--) {  // MSB to LSB
+        if (mask & (1 << i)) {
+            uint8_t byte = (data >> (i * 8)) & 0xFF;
+            offset += std::sprintf(buf + offset, "%02x", byte);
+        }
+    }
+    return std::string(buf);
+}
 
 class OrionSim {
 public:
@@ -81,25 +99,38 @@ public:
 
         SIMLOG("Resetting SoC\n");
         tb->reset(RESET_CYCLES);
+        printf("----------------------------------------\n");
 
         // Tick the simulation
         uint32_t finish_pc = 0;
         bool finish_req = false;
-        while(!tb->finished() && tb->get_cycles() < max_cycles && !finish_req) {
+        while(!tb->finished() && tb->get_cycles() < max_cycles) {
             if(tb->get_cycles() % 10000 == 0) {
                 SIMLOG("  - %lu cycles\n", tb->get_cycles());
             }
 
+            tb->tick();
+            
             // Check for EBREAK instruction
             finish_req = got_finish(&finish_pc);
+            if(finish_req) {
+                break;
+            }
 
-            tb->tick();
+            // SIMUART
+            if((*signal_ptrs.instr_valid & 0x1) && 
+                (*signal_ptrs.mem_wmask & 0x1) &&
+                (*signal_ptrs.mem_addr == CONSOLE_ADDR)) {
+                printf("%c", *signal_ptrs.mem_wdata & 0xFF);
+            }
 
             if(log_f) {
                 sim_log();
             }
         }
 
+
+        printf("----------------------------------------\n");
         SIMLOG("Simulation finished @ %lu cycles\n", tb->get_cycles());
 
         if(tb->get_cycles() >= max_cycles) {
@@ -120,7 +151,7 @@ public:
     }
 
     bool got_finish(uint32_t *ebreak_pc) {
-        if (*signal_ptrs.instr_valid && *signal_ptrs.instr == RV_EBREAK) {
+        if ((*signal_ptrs.instr_valid & 0x1) && *signal_ptrs.instr == RV_EBREAK) {
             *ebreak_pc = *signal_ptrs.pc;    // save the PC of the EBREAK instruction
             return true;
         }
@@ -210,17 +241,18 @@ public:
                 load;       core  {core_id}: <priv> <pc> (<instr>) rd <loaded_data> mem <load_target_address>
             */
             fprintf(log_f, "core   0: 3 0x%08x (0x%08x)", *signal_ptrs.pc, *signal_ptrs.instr);
-            if((*signal_ptrs.rd_we & 0x1) && ((*signal_ptrs.rd_s & 0x1f) != 0)) {
-                fprintf(log_f, " x%-2d 0x%08x", *signal_ptrs.rd_s & 0x1f, *signal_ptrs.rd_v);
-            } 
+            if(*signal_ptrs.mem_rmask & 0xf) {
+                // rd <loaded_data> mem <load_target_address>
+                fprintf(log_f, " x%-2d 0x%08x mem 0x%08x", *signal_ptrs.rd_s & 0x1f, *signal_ptrs.mem_rdata, *signal_ptrs.mem_addr);
+            }
             else if(*signal_ptrs.mem_wmask & 0xf) {
                 // mem <store_target_address> <data_to_store>
-                fprintf(log_f, " mem 0x%08x 0x%08x", *signal_ptrs.mem_addr, *signal_ptrs.mem_wdata);
+                fprintf(log_f, " mem 0x%08x 0x%s", *signal_ptrs.mem_addr, get_masked_hexstr(*signal_ptrs.mem_wdata, *signal_ptrs.mem_wmask).c_str());
             }
-            else if(*signal_ptrs.mem_rmask & 0xf) {
-                // rd <loaded_data> mem <load_target_address>
-                fprintf(log_f, " r%-2d 0x%08x mem 0x%08x", *signal_ptrs.rd_s & 0x1f, *signal_ptrs.mem_rdata, *signal_ptrs.mem_addr);
-            }
+            else if((*signal_ptrs.rd_we & 0x1) && ((*signal_ptrs.rd_s & 0x1f) != 0)) {
+                fprintf(log_f, " x%-2d 0x%08x", *signal_ptrs.rd_s & 0x1f, *signal_ptrs.rd_v);
+            } 
+            
         } else {
             fprintf(log_f, "[%8lu] %s ", tb->get_cycles(), *signal_ptrs.instr_valid ? "       " : "INVALID");
             fprintf(log_f, "PC: 0x%08x, Instr: 0x%08x, ", *signal_ptrs.pc, *signal_ptrs.instr);

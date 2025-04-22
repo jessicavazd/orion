@@ -19,23 +19,21 @@ import orion_types::*;
     output if_id_t              if_id_o 
 );
 
-    // TODO: We need to discard response when jumping,
-    // The response may come in current cycle or later cycles.
     logic discard_imem_resp;
     assign discard_imem_resp = 1'b0;    
-    // always_ff @(posedge clk_i) begin
-    //     if (rst_i) begin
-    //         discard_imem_resp <= 1'b0;
-    //     end
-    //     else begin
-    //         if (ex_if_i.jump_en) begin
-    //             discard_imem_resp <= 1'b1;
-    //         end
-    //         else if (discard_imem_resp && imem_resp_i) begin     // We got response from I$, discard it
-    //             discard_imem_resp <= 1'b0;
-    //         end
-    //     end
-    // end
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            discard_imem_resp <= 1'b0;
+        end
+        else begin
+            if (ex_if_i.jump_en) begin
+                discard_imem_resp <= 1'b1;
+            end
+            else if (discard_imem_resp && imem_resp_i) begin     // We got response from I$, discard it
+                discard_imem_resp <= 1'b0;
+            end
+        end
+    end
     
 
     logic imem_resp;
@@ -43,7 +41,7 @@ import orion_types::*;
     
     // PC stall
     logic pc_stall;
-    assign pc_stall = stall_i || !imem_resp;
+    assign pc_stall = stall_i || (imem_valid_o && !imem_resp);
 
     // PC register
     logic [XLEN-1:0]  pc /* verilator public */;
@@ -78,6 +76,6 @@ import orion_types::*;
 
     assign if_id_o.pc     = pc;
     assign if_id_o.instr  = imem_rdata_i; 
-    assign if_id_o.valid  = !pc_stall;
+    assign if_id_o.valid  = !(pc_stall || ex_if_i.jump_en);
 
 endmodule

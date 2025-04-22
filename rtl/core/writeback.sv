@@ -44,8 +44,8 @@ import orion_types::*;
     assign dbg_mem_addr     = mem_wb_i.debug.mem_addr;
     assign dbg_mem_rmask    = mem_wb_i.debug.mem_rmask;
     assign dbg_mem_wmask    = mem_wb_i.debug.mem_wmask;
-    assign dbg_mem_rdata    = mem_wb_i.debug.mem_wdata;
-    assign dbg_mem_wdata    = mem_wb_i.debug.mem_rdata;
+    assign dbg_mem_rdata    = mem_wb_i.debug.mem_rdata;
+    assign dbg_mem_wdata    = mem_wb_i.debug.mem_wdata;
 `endif
 
 endmodule

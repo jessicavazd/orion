@@ -53,6 +53,18 @@ import orion_types::*;
     logic ex_mem_stall;
     logic mem_wb_stall;
 
+    logic load_use_stall_req;
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Stall logic
+    assign if_pc_stall  = if_id_stall /*|| imem_stall_i*/;
+
+    assign if_id_stall  = id_ex_stall || load_use_stall_req;
+    assign id_ex_stall  = ex_mem_stall /*|| dmem_stall_i*/;
+    assign ex_mem_stall = mem_stall_o;
+    assign mem_wb_stall = 1'b0;
+
     ////////////// FLUSH ////////////////////
     logic id_flush_req;
     assign id_flush_req = ex_if.jump_en;
@@ -93,7 +105,9 @@ import orion_types::*;
     decode decode_stg (
         .clk_i          (clk_i),
         .rst_i          (rst_i),
-        .flush_req      (id_flush_req),
+        .flush_req_i    (id_flush_req),
+
+        .load_use_stall_req_o (load_use_stall_req),
         
         .if_id_i        (if_id_reg),
         .ex_id_i        (ex_id),
@@ -185,14 +199,6 @@ import orion_types::*;
     );
 
 
-    ////////////////////////////////////////////////////////////////////////////
-    // Stall logic
-    assign if_pc_stall  = if_id_stall /*|| imem_stall_i*/;
-
-    assign if_id_stall  = id_ex_stall;
-    assign id_ex_stall  = ex_mem_stall /*|| dmem_stall_i*/;
-    assign ex_mem_stall = mem_stall_o;
-    assign mem_wb_stall = 1'b0;
 
     // `UNDRIVEN_VAR(dmem_addr_o)
     // `UNDRIVEN_VAR(dmem_wdata_o)

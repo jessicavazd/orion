@@ -5,7 +5,9 @@ import orion_types::*;
 (
     input logic         clk_i,
     input logic         rst_i,
-    input logic         flush_req,
+    input logic         flush_req_i,
+    
+    output logic        load_use_stall_req_o,
 
     input if_id_t       if_id_i,
     input ex_id_t       ex_id_i,
@@ -53,6 +55,8 @@ import orion_types::*;
         id_ex_o.ld_str_type     = funct3_load_store_t'(funct3);
         id_ex_o.is_load        = 1'b0;
         id_ex_o.is_store       = 1'b0;
+        id_ex_o.is_jump        = 1'b0;
+        id_ex_o.is_jump_conditional = 1'b0;
 
         unique case (opcode) 
             OP_REG : begin
@@ -79,7 +83,7 @@ import orion_types::*;
             end
             OP_IMM : begin;
                 unique case (funct3)
-                    FUNCT3_ADD : id_ex_o.alu_op = funct7[5] ? ALU_OP_SUB : ALU_OP_ADD;
+                    FUNCT3_ADD : id_ex_o.alu_op = ALU_OP_ADD;
                     FUNCT3_SLL : id_ex_o.alu_op = ALU_OP_SLL;
                     FUNCT3_XOR : id_ex_o.alu_op = ALU_OP_XOR;
                     FUNCT3_SR  : id_ex_o.alu_op = funct7[5] ? ALU_OP_SRA : ALU_OP_SRL;
@@ -246,7 +250,9 @@ import orion_types::*;
         end
     end
 
-    assign id_ex_o.valid = flush_req ? 1'b0 : if_id_i.valid ;
+    assign load_use_stall_req_o = rs1_load_use_hazard || rs2_load_use_hazard;
+
+    assign id_ex_o.valid = (flush_req_i || load_use_stall_req_o) ? 1'b0 : if_id_i.valid ;
     assign id_ex_o.pc    = if_id_i.pc;
     assign id_ex_o.rs1_v = rs1_v_fwd;
     assign id_ex_o.rs2_v = rs2_v_fwd;

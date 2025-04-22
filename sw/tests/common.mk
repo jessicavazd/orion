@@ -19,7 +19,8 @@ LOG?=
 RVPREFIX := riscv64-unknown-elf
 CFLAGS += -Wall -O0
 CFLAGS += -march=rv32i -mabi=ilp32 -nostartfiles -ffreestanding
-LFLAGS := -T $(ORION_HOME)/sw/lib/link.ld 
+LFLAGS := -T $(ORION_HOME)/sw/lib/link.ld -Wl,-Map=$(BUILD_DIR)/$(basename $(EXEC)).map
+
 
 ORIONSIM_FLAGS:= 
 ifeq ($(TRACE), 1)
@@ -34,6 +35,9 @@ endif
 
 all: build
 
+################################################################################
+# build: Builds the program
+################################################################################
 .PHONY: build
 build: $(BUILD_DIR)/$(EXEC)
 
@@ -44,26 +48,37 @@ $(BUILD_DIR)/$(EXEC): $(SRCS)
 	$(RVPREFIX)-objcopy -O binary $@ $(basename $@).bin
 	xxd -e -c 4 $(basename $@).bin | awk '{print $$2}' > $(basename $@).hex
 
+
+################################################################################
+# run: Runs the program on Orionsim
+################################################################################
 .PHONY: run
 run: $(BUILD_DIR)/$(EXEC)
 	@echo "Running $(EXEC)"
 	orionsim $(ORIONSIM_FLAGS) $(basename $<).hex
 
 
-.PHONY: run-verify
-run-verify: $(BUILD_DIR)/$(EXEC)
-	@echo "Running $(EXEC) with spike verification"
-	spike --isa=rv32i -m0x10000:0x10000 --log-commits $(BUILD_DIR)/$(EXEC) |& tail -n +6 > $(BUILD_DIR)/spike.log
-	orionsim $(ORIONSIM_FLAGS) --log $(BUILD_DIR)/orionsim.log --log-format spike $(basename $<).hex
-	@echo "Comparing logs"
-	diff -y -W 260 $(BUILD_DIR)/spike.log $(BUILD_DIR)/orionsim.log > run_diff && echo -e "$(CLR_GR)[+] Verification Success$(CLR_NC)" || \
-	{ echo -e "$(CLR_RD)[!] Verification failed$(CLR_NC)"; exit 1; }
-# diff --side-by-side $(BUILD_DIR)/spike.log $(BUILD_DIR)/orionsim.log | awk '{ printf "%-80.80s %-80.80s\n", substr($0,1,80), substr($0,82) }'
+################################################################################
+# run-verif: Runs the program on both Spike and Orionsim, and compares the logs.
+################################################################################
+SPIKE_LOG := $(BUILD_DIR)/spike.log
+ORIONSIM_LOG := $(BUILD_DIR)/orionsim.log
+DIFF_FILE := $(BUILD_DIR)/run.diff
+
+.PHONY: run-verif
+run-verif: $(BUILD_DIR)/$(EXEC)
+	@echo "Running $(EXEC) on Spike and Orionsim"
+	spike --isa=rv32i -m0x10000:0x10000 --log-commits $(BUILD_DIR)/$(EXEC) 2>&1 | tail -n +6 > $(SPIKE_LOG)
+	orionsim $(ORIONSIM_FLAGS) --log $(ORIONSIM_LOG) --log-format spike $(basename $<).hex || true
+	@diff -y --width=140 $(SPIKE_LOG) $(ORIONSIM_LOG) | expand -t 8 > $(DIFF_FILE)
+	@grep -qE '\||<|>' $(DIFF_FILE) && \
+		printf "$(CLR_RD)[!] Verification failed: Differences found$(CLR_NC)\n" && exit 1 || \
+		printf "$(CLR_GR)[+] Verification success: No differences found in logs$(CLR_NC)\n"
 
 
-# $(ORION_HOME)/scripts/spike-log-diff.py $(BUILD_DIR)/spike.log $(BUILD_DIR)/orionsim.log
-
-
+################################################################################
+# clean: Cleans the build directory
+################################################################################
 .PHONY: clean
 clean:
 	rm -f $(BUILD_DIR)/*

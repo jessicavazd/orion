@@ -5,7 +5,7 @@ ENTRY(_start)
 /* MEMORY LAYOUT */
 MEMORY
 {
-    RAM (rx):       ORIGIN = 0x10000, LENGTH = 64K
+    RAM (rwx):       ORIGIN = 0x10000, LENGTH = 64K
 }
 
 /* Specify Sections */

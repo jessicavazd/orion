@@ -2,34 +2,41 @@
 .globl _start
 
 _start:
-    li x2, 0x10000
-    nop;nop;nop;nop;nop;
+    la x1, data0
 
-    sw x2, 0(x2)
-    nop;nop;nop;nop;nop;
+    li x2, 0xdeadbeef
 
-    lw x3, 0(x2)
+    lw x3, 0(x1)
+    sw x2, 0(x1)
+    lw x4, 0(x1)
 
     j _exit
 
+
+.data
+data0:
+    .word 0xbabecafe
 
 
 
 # -------------------------------------------------------------
 # exit_spike: Writes to `tohost` to trigger exit in Spike
 # -------------------------------------------------------------
+.text
 .globl _exit
 _exit:
     li a0, 1         # any nonzero value
     la t0, tohost    # get address of `tohost`
     sw a0, 0(t0)     # write to tohost (Spike sees it and exits)
     ebreak           # for orionsim
+    nop;nop;nop;nop; # Fill up the pipeline after ebreak to prevent garbage execution
 
 # 1:  j 1b           # hang forever (if Spike doesn’t exit immediately)
 
 # -------------------------------------------------------------
 # These sections are recognized by Spike as communication channels
 # -------------------------------------------------------------
+.data
 .section .tohost, "aw", @progbits
 .globl tohost
 .align 4
