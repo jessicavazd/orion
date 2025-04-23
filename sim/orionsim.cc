@@ -18,9 +18,18 @@
 
 #define RV_EBREAK 0x00100073
 
-#define SIMLOG(x, ...)  printf("[+] " x, ##__VA_ARGS__)
-#define SIMWARN(x, ...) printf("[!] " x, ##__VA_ARGS__)
-#define SIMERR(x, ...)  printf("[ERROR] " x, ##__VA_ARGS__)
+// Logging //////////
+enum verbosity_t {ALL=3, DEFAULT=2, ERRORS=1, NONE=0};
+verbosity_t verbosity = DEFAULT;
+
+#define SIMLOG(x, ...)  if(verbosity >= DEFAULT) printf("[+] " x, ##__VA_ARGS__)
+#define SIMWARN(x, ...) if(verbosity >= DEFAULT) printf("[!] " x, ##__VA_ARGS__)
+#define SIMERR(x, ...)  if(verbosity >= ERRORS) printf("[ERROR] " x, ##__VA_ARGS__)
+#define LOG(x)  if(verbosity >= DEFAULT) {x}
+#define WARN(x) if(verbosity >= DEFAULT) {x}
+#define ERR(x)  if(verbosity >= ERRORS) {x}
+/////////////////////
+
 
 #ifdef TRACE_FST
     #define TRACE_FILE "trace.fst"
@@ -55,7 +64,7 @@ class OrionSim {
 public:
     OrionSim() {
         // Initialize the simulator
-        printf("%s", banner.c_str());
+        LOG(printf("%s", banner.c_str());)
         
         SIMLOG("Initializing simulator\n");
      
@@ -99,7 +108,8 @@ public:
 
         SIMLOG("Resetting SoC\n");
         tb->reset(RESET_CYCLES);
-        printf("----------------------------------------\n");
+
+        LOG(printf("----------------------------------------\n");)
 
         // Tick the simulation
         uint32_t finish_pc = 0;
@@ -130,7 +140,7 @@ public:
         }
 
 
-        printf("----------------------------------------\n");
+        LOG(printf("----------------------------------------\n");)
         SIMLOG("Simulation finished @ %lu cycles\n", tb->get_cycles());
 
         if(tb->get_cycles() >= max_cycles) {
@@ -322,6 +332,7 @@ int main(int argc, char** argv) {
     parser.add_argument({"-t", "--trace"}, "Enable trace", ArgParse::ArgType_t::BOOL, "false");
     parser.add_argument({"--trace-file"}, "Specify a trace file (Trace type: " TRACE_TYPE_STR ")", ArgParse::ArgType_t::STR, TRACE_FILE);
     parser.add_argument({"-l", "--log"}, "Enable simulation log", ArgParse::ArgType_t::STR);
+    parser.add_argument({"-v", "--verbosity"}, "Set verbosity (ALL=3, DEFAULT=2, ERRORS=1, NONE=0)", ArgParse::ArgType_t::INT);
     parser.add_argument({"--log-format"}, "Specify log format (choices: spike, default)", ArgParse::ArgType_t::STR);
     parser.add_argument({"--dump-mem"}, "Dump memory contents to a file after simulation finishes", ArgParse::ArgType_t::STR);
 
@@ -330,6 +341,16 @@ int main(int argc, char** argv) {
     }
     auto opt_args = parser.get_opt_args();
     auto pos_args = parser.get_pos_args();
+
+    // Set print verbosity
+    if(opt_args.count("verbosity") > 0) {
+        verbosity_t verb = (verbosity_t)opt_args["verbosity"].value.as_int;
+        if (!(verb >= NONE && verb < ALL)) {
+            SIMERR("Invalid verbosity value: %d\n", verb);
+            return 1;
+        }
+        verbosity = verb;
+    }
 
     // Create the simulator instance
     OrionSim sim;
