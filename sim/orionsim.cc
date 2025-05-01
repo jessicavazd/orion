@@ -117,6 +117,7 @@ public:
         // Tick the simulation
         uint32_t finish_pc = 0;
         bool finish_req = false;
+        uint32_t instr_done = 0;
         while(!tb->finished() && tb->get_cycles() < max_cycles) {
             if(tb->get_cycles() % 10000 == 0) {
                 SIMLOG("  - %lu cycles\n", tb->get_cycles());
@@ -128,6 +129,11 @@ public:
             finish_req = got_finish(&finish_pc);
             if(finish_req) {
                 break;
+            }
+
+            // For IPC Calculation
+            if (*signal_ptrs.instr_valid & 0x1) {
+                instr_done++;
             }
 
             // SIMUART
@@ -144,6 +150,8 @@ public:
 
 
         LOG(printf("----------------------------------------\n");)
+        SIMLOG("Instructions executed: %u\n", instr_done);
+        SIMLOG("IPC: %.2f\n", (float)instr_done/(float)tb->get_cycles());
         SIMLOG("Simulation finished @ %lu cycles\n", tb->get_cycles());
 
         if(tb->get_cycles() >= max_cycles) {
