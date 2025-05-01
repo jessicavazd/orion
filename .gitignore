@@ -6,5 +6,3 @@ riscv-gnu-toolchain/
 *.fst
 *.hex
 *.log
-python*/
-riscof-verif/
