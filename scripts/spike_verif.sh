@@ -80,7 +80,7 @@ if [ ! -f ${EXEC_HEX} ]; then
 fi
 echo "Running Orionsim (Hex: ${EXEC_HEX})"
 echo "$ orionsim ${ORIONSIM_FLAGS} ${EXEC_HEX}"
-orionsim ${ORIONSIM_FLAGS} ${EXEC_HEX}
+orionsim ${ORIONSIM_FLAGS} ${EXEC_HEX} || true
 
 # Check if the logs are identical
 diff -y --width=140 ${SPIKE_LOG} ${ORIONSIM_LOG} | expand -t 8 > ${DIFF_FILE}
