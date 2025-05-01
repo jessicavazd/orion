@@ -69,9 +69,6 @@ run-verif: $(BUILD_DIR)/$(EXEC)
 		--spike-flags "$(SPIKE_FLAGS)" \
 		--orionsim-flags "$(ORIONSIM_FLAGS)"
 
-# spike --isa=rv32i -m0x10000:0x10000 --log-commits $(BUILD_DIR)/$(EXEC) 2>&1 | tail -n +6 > $(SPIKE_LOG)
-# orionsim $(ORIONSIM_FLAGS) --log $(ORIONSIM_LOG) --log-format spike $(basename $<).hex || true
-	
 
 ################################################################################
 # clean: Cleans the build directory

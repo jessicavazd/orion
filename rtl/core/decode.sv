@@ -220,7 +220,7 @@ import orion_types::*;
     logic rs1_load_use_hazard;
     logic rs2_load_use_hazard;
     assign rs1_load_use_hazard = rs1_ex_fwd_en && ex_id_i.is_load;
-    assign rs2_load_use_hazard = rs1_ex_fwd_en && ex_id_i.is_load;
+    assign rs2_load_use_hazard = rs2_ex_fwd_en && ex_id_i.is_load;
 
     // Rs1_v forwarding mux
     logic [XLEN-1:0] rs1_v_fwd;

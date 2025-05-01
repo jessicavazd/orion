@@ -2,10 +2,10 @@
 [*] GTKWave Analyzer v3.3.121 (w)1999-2024 BSI
 [*] Mon Apr 21 08:16:01 2025
 [*]
-[dumpfile] "/home/saursin/work/orion/trace.fst"
+[dumpfile] "trace.fst"
 [dumpfile_mtime] "Mon Apr 21 07:57:29 2025"
 [dumpfile_size] 10701
-[savefile] "/home/saursin/work/orion/waves.gtkw"
+[savefile] "waves.gtkw"
 [timestart] 9
 [size] 1920 1153
 [pos] -641 -1601

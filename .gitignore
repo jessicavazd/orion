@@ -1,5 +1,4 @@
 build/
-riscv-gnu-toolchain/
 .vscode/
 .bak/
 *.vcd

@@ -119,9 +119,9 @@ public:
         bool finish_req = false;
         uint32_t instr_done = 0;
         while(!tb->finished() && tb->get_cycles() < max_cycles) {
-            if(tb->get_cycles() % 10000 == 0) {
-                SIMLOG("  - %lu cycles\n", tb->get_cycles());
-            }
+            // if(tb->get_cycles() % 10000 == 0) {
+            //     SIMLOG("  - %lu cycles\n", tb->get_cycles());
+            // }
 
             tb->tick();
             
@@ -310,7 +310,7 @@ public:
 
 private:
     Testbench<Vorion_soc> *tb;
-    uint64_t max_cycles = 100000;
+    uint64_t max_cycles = 10000000;
 
     struct {
         bool *instr_valid;
