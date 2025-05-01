@@ -1,9 +1,9 @@
 .equ CONSOLE_ADDR, 0x1FFFc
 
 .text
-.globl _start
+.globl main
 
-_start:
+main:
     la a0, msg
     jal putstr
     j _exit
@@ -43,32 +43,3 @@ putchar:
     ret
 
 
-# -------------------------------------------------------------
-# exit_spike: Writes to `tohost` to trigger exit in Spike
-# -------------------------------------------------------------
-.text
-.globl _exit
-_exit:
-    li a0, 1         # any nonzero value
-    la t0, tohost    # get address of `tohost`
-    sw a0, 0(t0)     # write to tohost (Spike sees it and exits)
-    ebreak           # for orionsim
-    nop;nop;nop;nop; # Fill up the pipeline after ebreak to prevent garbage execution
-
-# 1:  j 1b           # hang forever (if Spike doesn’t exit immediately)
-
-# -------------------------------------------------------------
-# These sections are recognized by Spike as communication channels
-# -------------------------------------------------------------
-.data
-.section .tohost, "aw", @progbits
-.globl tohost
-.align 4
-tohost:
-    .word 0
-
-.section .fromhost, "aw", @progbits
-.globl fromhost
-.align 4
-fromhost:
-    .word 0

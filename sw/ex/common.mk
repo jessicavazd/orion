@@ -1,4 +1,4 @@
-include ../../common.mk
+include ../../../common.mk
 
 # Override these variables 
 BUILD_DIR?= build
@@ -11,9 +11,10 @@ LOG?=
 RVPREFIX := riscv64-unknown-elf
 CFLAGS += -Wall -O0
 CFLAGS += -march=rv32i -mabi=ilp32 -nostartfiles -ffreestanding
+CFLAGS += -I$(ORION_HOME)/sw/lib/include
 LFLAGS := -T $(ORION_HOME)/sw/lib/link/link.ld -Wl,-Map=$(BUILD_DIR)/$(basename $(EXEC)).map
 
-SRCS += $(ORION_HOME)/sw/lib/start.S
+SRCS += $(ORION_HOME)/sw/lib/start.S $(wildcard $(ORION_HOME)/sw/lib/*.c)
 
 ORIONSIM_FLAGS:= 
 ifeq ($(TRACE), 1)

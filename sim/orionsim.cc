@@ -67,6 +67,9 @@ public:
         LOG(printf("%s", banner.c_str());)
         
         SIMLOG("Initializing simulator\n");
+        SIMLOG("Memory map:\n");
+        SIMLOG(" - RAM : 0x%08x (0x%x B)\n", MEM_ADDR, MEM_SIZE);
+        SIMLOG(" - UART: 0x%08x\n", CONSOLE_ADDR);
      
         tb = new Testbench<Vorion_soc>();
         tb->register_clk((bool*)&tb->dut_->clk_i);

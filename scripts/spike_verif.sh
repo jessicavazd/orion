@@ -69,6 +69,7 @@ ORIONSIM_FLAGS="${ORIONSIM_FLAGS} --log ${ORIONSIM_LOG} --log-format spike"
 
 # Execute Spike
 echo "Running spike (ELF: ${ELF})"
+echo "$ spike ${SPIKE_FLAGS} ${ELF}"
 spike ${SPIKE_FLAGS} ${ELF} 2>&1 | tail -n +6 > ${SPIKE_LOG}
 
 # Execute orionsim
@@ -78,6 +79,7 @@ if [ ! -f ${EXEC_HEX} ]; then
     exit 1
 fi
 echo "Running Orionsim (Hex: ${EXEC_HEX})"
+echo "$ orionsim ${ORIONSIM_FLAGS} ${EXEC_HEX}"
 orionsim ${ORIONSIM_FLAGS} ${EXEC_HEX}
 
 # Check if the logs are identical
