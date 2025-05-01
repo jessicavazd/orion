@@ -1,12 +1,4 @@
-CLR_RD := \033[0;31m
-CLR_GR := \033[0;32m
-CLR_CY := \033[0;36m
-CLR_BL := \033[34m
-CLR_NC := \033[0m
-
-ifeq ($(ORION_HOME), )
-    $(error "ORION_HOME environment variable not set, did you source the sourceme script?")
-endif
+include ../../../common.mk
 
 # Override these variables 
 BUILD_DIR?= build
