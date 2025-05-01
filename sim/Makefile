@@ -94,8 +94,7 @@ OBJS:= $(patsubst %, $(OBJ_DIR)/%, $(notdir $(patsubst %.cc, %.o, $(CXXSRCS))))
 # Simulation executable
 EXE:= $(BIN_DIR)/orionsim
 
-all: sim
-
+default: sim
 ########################################
 .PHONY: sim
 sim: $(EXE)

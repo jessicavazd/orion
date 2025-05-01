@@ -18,7 +18,7 @@ CLR_NC:=\033[0m
 endif
 
 # Set the default target to 'default'
-.DEFAULT_GOAL := all
+.DEFAULT_GOAL:= default
 
 # This disables printing the directory name when invoking make in subdirectories
 MAKEFLAGS += --no-print-directory

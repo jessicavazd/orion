@@ -1,4 +1,4 @@
-include ../../../common.mk
+include ../../common.mk
 
 # Override these variables 
 BUILD_DIR?= build
@@ -11,7 +11,7 @@ LOG?=
 RVPREFIX := riscv64-unknown-elf
 CFLAGS += -Wall -O0
 CFLAGS += -march=rv32i -mabi=ilp32 -nostartfiles -ffreestanding
-LFLAGS := -T $(ORION_HOME)/sw/lib/link.ld -Wl,-Map=$(BUILD_DIR)/$(basename $(EXEC)).map
+LFLAGS := -T $(ORION_HOME)/sw/lib/link/link_minimal.ld -Wl,-Map=$(BUILD_DIR)/$(basename $(EXEC)).map
 
 
 ORIONSIM_FLAGS:= 
@@ -25,7 +25,9 @@ ifeq ($(LOG), 1)
     ORIONSIM_FLAGS += --log $(ORION_HOME)/sim.log
 endif
 
-all: build
+SPIKE_FLAGS := --isa=rv32i -m0x10000:0x10000
+
+default: build
 
 ################################################################################
 # build: Builds the program
@@ -53,20 +55,21 @@ run: $(BUILD_DIR)/$(EXEC)
 ################################################################################
 # run-verif: Runs the program on both Spike and Orionsim, and compares the logs.
 ################################################################################
-SPIKE_LOG := $(BUILD_DIR)/spike.log
-ORIONSIM_LOG := $(BUILD_DIR)/orionsim.log
-DIFF_FILE := $(BUILD_DIR)/run.diff
+# SPIKE_LOG := $(BUILD_DIR)/spike.log
+# ORIONSIM_LOG := $(BUILD_DIR)/orionsim.log
+# DIFF_FILE := $(BUILD_DIR)/run.diff
+
 
 .PHONY: run-verif
 run-verif: $(BUILD_DIR)/$(EXEC)
 	@echo "Running $(EXEC) on Spike and Orionsim"
-	spike --isa=rv32i -m0x10000:0x10000 --log-commits $(BUILD_DIR)/$(EXEC) 2>&1 | tail -n +6 > $(SPIKE_LOG)
-	orionsim $(ORIONSIM_FLAGS) --log $(ORIONSIM_LOG) --log-format spike $(basename $<).hex || true
-	@diff -y --width=140 $(SPIKE_LOG) $(ORIONSIM_LOG) | expand -t 8 > $(DIFF_FILE)
-	@grep -qE '\||<|>' $(DIFF_FILE) && \
-		printf "$(CLR_RD)[!] Verification failed: Differences found$(CLR_NC)\n" && exit 1 || \
-		printf "$(CLR_GR)[+] Verification success: No differences found in logs$(CLR_NC)\n"
+	bash $(ORION_HOME)/scripts/spike_verif.sh --elf $(BUILD_DIR)/$(EXEC) --build-dir $(BUILD_DIR) \
+		--spike-flags "$(SPIKE_FLAGS)" \
+		--orionsim-flags "$(ORIONSIM_FLAGS)"
 
+# spike --isa=rv32i -m0x10000:0x10000 --log-commits $(BUILD_DIR)/$(EXEC) 2>&1 | tail -n +6 > $(SPIKE_LOG)
+# orionsim $(ORIONSIM_FLAGS) --log $(ORIONSIM_LOG) --log-format spike $(basename $<).hex || true
+	
 
 ################################################################################
 # clean: Cleans the build directory
