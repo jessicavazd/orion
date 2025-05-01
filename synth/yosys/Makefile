@@ -1,4 +1,5 @@
 # ***** Makefile to run Yosys synthesis *****
+include ../../common.mk
 
 BUILD_DIR?=build
 $(shell mkdir -p $(BUILD_DIR))

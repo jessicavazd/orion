@@ -15,15 +15,7 @@ EN_SVASSERT?= 1
 TRACE_FORMAT?= fst
 
 ########################################
-CLR_RD := \033[0;31m
-CLR_GR := \033[0;32m
-CLR_CY := \033[0;36m
-CLR_BL := \033[34m
-CLR_NC := \033[0m
-
-ifeq ($(ORION_HOME), )
-    $(error "ORION_HOME environment variable not set, did you source the sourceme script?")
-endif
+include ../common.mk
 
 OBJ_DIR:= 		$(BUILD_DIR)/obj
 VERILATED_DIR:= $(BUILD_DIR)/verilated
@@ -79,7 +71,7 @@ endif
 
 # SV Assertions
 ifeq ($(EN_SVASSERT), 1)
-    $(info SV Assertions enabled)
+    $(info - SV Assertions enabled)
     VFLAGS += --assert
 endif
 
@@ -102,6 +94,7 @@ OBJS:= $(patsubst %, $(OBJ_DIR)/%, $(notdir $(patsubst %.cc, %.o, $(CXXSRCS))))
 # Simulation executable
 EXE:= $(BIN_DIR)/orionsim
 
+default: sim
 ########################################
 .PHONY: sim
 sim: $(EXE)

@@ -1,7 +1,7 @@
     .text
-    .globl _start
+    .globl main
 
-_start:
+main:
     #-------------------------------------------------------------------
     # BEQ: forward, taken
     #-------------------------------------------------------------------
@@ -252,33 +252,3 @@ res_bgeu_nt:  .word 0
 res_jal:      .word 0
 res_jalr:     .word 0
 res_j:        .word 0
-
-
-    #-------------------------------------------------------------------
-    # Exit routine (Spike & OrionSim)
-    #-------------------------------------------------------------------
-    .text
-    .globl _exit
-_exit:
-    li   a0, 1            # nonzero tohost exit code
-    la   t0, tohost
-    sw   a0, 0(t0)
-    ebreak
-    nop; nop; nop; nop    # fill pipeline
-
-
-    #-------------------------------------------------------------------
-    # To/from-host channels
-    #-------------------------------------------------------------------
-    .data
-    .section .tohost, "aw", @progbits
-    .align 4
-    .globl tohost
-tohost:
-    .word 0
-
-    .section .fromhost, "aw", @progbits
-    .align 4
-    .globl fromhost
-fromhost:
-    .word 0
