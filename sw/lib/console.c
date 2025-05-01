@@ -1,7 +1,6 @@
 #include "console.h"
 
-extern volatile char _console_addr;
-
+extern volatile int _console_addr;
 
 void console_putchar(char c) {
     // Write the character to the console
