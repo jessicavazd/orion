@@ -8,12 +8,12 @@ SRCS := \
 
 CFLAGS += -O2 \
           -I. -Ibarebones \
-          -DITERATIONS=150 \
+          -DITERATIONS=10 \
           -DHAS_FLOAT=0 \
           -DHAS_TIME_H=0 \
-          -DHAS_STDIO=0 \
-          -DHAS_PRINTF=0 \
-          -DMULTITHREAD=0
+          -DHAS_STDIO=1 \
+          -DHAS_PRINTF=1 \
+          -DMULTITHREAD=1
 
 FLAGS_STR:= $(CFLAGS)
 CFLAGS += -DFLAGS_STR='"$(FLAGS_STR)"'
