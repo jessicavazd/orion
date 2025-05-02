@@ -1,22 +1,4 @@
-#include "console.h"
-
-// Print a non-negative integer using console_putchar
-static void print_num(int n) {
-    if (n == 0) {
-        console_putchar('0');
-        return;
-    }
-    char buf[12];
-    int i = 0;
-    while (n > 0) {
-        buf[i++] = '0' + (n % 10);
-        n /= 10;
-    }
-    // digits are in reverse
-    while (i--) {
-        console_putchar(buf[i]);
-    }
-}
+#include <stdio.h>
 
 // Simple recursive Fibonacci
 static int fib_recursive(int n) {
@@ -37,7 +19,7 @@ static int fib_iterative(int n) {
 }
 
 int main(void) {
-    console_puts("Fibonacci Comparison Demo:");
+    puts("Fibonacci Comparison Demo:\n");
     const int length = 20;
 
     for (int i = 0; i < length; i++) {
@@ -45,20 +27,15 @@ int main(void) {
         int fr = fib_recursive(i);
 
         // print index
-        print_num(i);
-        console_puts(": iterative = ");
-        print_num(fi);
-        console_puts(", recursive = ");
-        print_num(fr);
+        printf("%d : iterative = %d, recursive = %d",i, fi, fr);
 
         // comparison
         if (fi == fr) {
-            console_puts("  [OK]");
+            puts("  [OK]");
         } else {
-            console_puts("  [ERROR]");
+            puts("  [ERROR]");
         }
-
-        console_putchar('\n');
+        putchar('\n');
     }
 
     return 0;

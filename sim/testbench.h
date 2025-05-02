@@ -59,6 +59,9 @@ public:
     // get the number of cycles elapsed till now
     virtual uint64_t get_cycles() {return cycles_;}
 
+    // get the current time in the simulation
+    virtual uint64_t get_time() {return Verilated::time();}
+
 private:
     // Trace file ptr
 #ifdef TRACE_FST

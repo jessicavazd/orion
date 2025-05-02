@@ -9,17 +9,73 @@
 
 #include "Vorion_soc_headers.h"
 
+// Get/Set/Clr bits in a word
+#define BIT_GET(x, n)           ((x) & (1 << (n)))
+#define BIT_SET(x, n, v)        ((v) ? ((x) | (1 << (n))) : ((x) & ~(1 << (n))))
+
+// Get/Set clear bitfields in a word (word[n:m])
+#define GET_MASK(n, m)          (((1 << ((n) - (m) + 1)) - 1) << (m)) 
+#define BITS_GET(x, n, m)       ((GET_MASK(n, m) & (x)) >> (m))
+#define BITS_SET(x, n, m, v)    (GET_MASK(n, m) & ((v) << (m)) | ((x) & ~GET_MASK(n, m)))
+
 #define MEM_ADDR 0x00010000
 #define MEM_SIZE (64*1024)  // 64KB
 
-#define CONSOLE_ADDR (MEM_ADDR + MEM_SIZE - 0x4)
+/*
+    VDEV (Virtual Devices)
+    ======================
+    Set of 8 registers to interact with the simulator
 
-#define TIMER_ADDR    (MEM_SIZE - 0xC)  // low word
-#define TIMER_ADDR_HI (MEM_SIZE - 0x8)  // high word
+    -------+-----------+-------------------------------------------------
+    Offset | Name      | Description
+    -------+-----------+-------------------------------------------------
+    0x00   | CONSOLE   | Console register (console input/output) 
+    0x04   | reserved  | --
+    0x08   | CYCLE     | CYCLE register low-word  (64-bit cycle counter)
+    0x0C   | CYCLE_HI  | CYCLE high-word
+    0x10   | INSTRET   | INSTRET low-word (64-bit instruction retired counter)
+    0x14   | INSTRET_HI| INSTRET high-word
+    0x18   | reserved  | --
+    0x1C   | SIMCTRL   | Simulation control register
+    -------+-----------+-------------------------------------------------
+
+    Register Description
+    =======================
+    0x00: CONSOLE
+        CONSOLE[7:0]:   Tx data
+        CONSOLE[15:8]:  Rx data
+        CONSOLE[16]:    Tx valid
+        CONSOLE[17]:    Rx valid
+
+    0x08: CYCLE
+        CYCLE[31:0]:    Low word of cycle counter
+
+    0x0C: CYCLE_HI
+        CYCLE_HI[31:0]: High word of cycle counter
+
+    0x10: INSTRET
+        INSTRET[31:0]:  Low word of instruction retired counter
+
+    0x14: INSTRET_HI
+        INSTRET_HI[31:0]: High word of instruction retired counter
+
+    0x1C: SIMCTRL
+        SIMCTRL[7:0]:   Return code
+        SIMCTRL[8]:     Finish request
+*/
+
+#define VDEV_ADDR               MEM_ADDR + MEM_SIZE - 0x20
+#define VDEV_SIZE               0x20
+
+#define VDEV_CONSOLE_ADDR       VDEV_ADDR + 0x00 // Console register
+#define VDEV_CYCLE_ADDR         VDEV_ADDR + 0x08 // CYCLE register low-word
+#define VDEV_CYCLE_ADDR_HI      VDEV_ADDR + 0x0C // CYCLE register high-word
+#define VDEV_INSTRET_ADDR       VDEV_ADDR + 0x10 // INSTRET register low-word
+#define VDEV_INSTRET_ADDR_HI    VDEV_ADDR + 0x14 // INSTRET register high-word
+#define VDEV_SIMCTRL_ADDR       VDEV_ADDR + 0x1C // SIMCTRL register
+
 
 #define RESET_CYCLES 2
-
-#define RV_EBREAK 0x00100073
 
 // Logging //////////
 enum verbosity_t {ALL=3, DEFAULT=2, ERRORS=1, NONE=0};
@@ -63,6 +119,13 @@ std::string get_masked_hexstr(uint32_t data, uint8_t mask) {
     return std::string(buf);
 }
 
+enum Term_cause_t {
+    TERM_CAUSE_UNKNOWN,     // Unknown termination cause
+    TERM_CAUSE_FINISH,      // $finish called from RTL
+    TERM_CAUSE_MAX_CYCLES,  // Reached maximum cycles
+    TERM_CAUSE_TERM_REQ     // Termination request from software
+};
+
 class OrionSim {
 public:
     OrionSim() {
@@ -72,7 +135,7 @@ public:
         SIMLOG("Initializing simulator\n");
         SIMLOG("Memory map:\n");
         SIMLOG(" - RAM : 0x%08x (0x%x B)\n", MEM_ADDR, MEM_SIZE);
-        SIMLOG(" - UART: 0x%08x\n", CONSOLE_ADDR);
+        SIMLOG(" - VDEV: 0x%08x (0x%x)\n", VDEV_ADDR, VDEV_SIZE);
      
         tb = new Testbench<Vorion_soc>();
         tb->register_clk((bool*)&tb->dut_->clk_i);
@@ -94,6 +157,12 @@ public:
         signal_ptrs.mem_wmask   = (uint8_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_mem_wmask;
         signal_ptrs.mem_rdata   = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_mem_rdata;
         signal_ptrs.mem_wdata   = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_mem_wdata;
+
+        // Clear vdev registers
+        for(int addr = VDEV_ADDR; addr < (VDEV_ADDR + VDEV_SIZE); addr+=4) {
+            unsigned mem_index = (addr - MEM_ADDR) / 4;
+            tb->dut_->orion_soc->memory->mem[mem_index] = 0x00000000;
+        }
     }
 
     ~OrionSim() {
@@ -107,10 +176,49 @@ public:
         delete tb;
     }
 
+    void eval_vdev() {
+        // Evaluate the VDEV registers
+        
+        // Console register (TX)
+        //printf("CONSOLEREG B: 0x%08x\n", tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4]);
+        if(BIT_GET(tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 16)) {
+            // DEBUG
+            //SIMLOG("Console TX: 0x%02x\n", BITS_GET(tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 7, 0));
+
+            uint8_t tx_data = BITS_GET(tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 7, 0);
+            putchar(tx_data);
+            fflush(stdout);
+
+            // Clear TX valid bit
+            tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4] = 
+                BIT_SET(tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 16, 0);
+        }
+
+        // TODO: Console register (RX)
+
+        // Cycle register
+        uint64_t cycles = tb->get_cycles();
+        tb->dut_->orion_soc->memory->mem[(VDEV_CYCLE_ADDR    - MEM_ADDR)/4] = (uint32_t)cycles;
+        tb->dut_->orion_soc->memory->mem[(VDEV_CYCLE_ADDR_HI - MEM_ADDR)/4] = (uint32_t)(cycles >> 32);
+
+        // Instruction retired register
+        tb->dut_->orion_soc->memory->mem[(VDEV_INSTRET_ADDR    - MEM_ADDR)/4] = (uint32_t)instret;
+        tb->dut_->orion_soc->memory->mem[(VDEV_INSTRET_ADDR_HI - MEM_ADDR)/4] = (uint32_t)(instret >> 32);
+        
+        // Simulation control register
+        uint32_t simctrl = tb->dut_->orion_soc->memory->mem[(VDEV_SIMCTRL_ADDR - MEM_ADDR)/4];
+        if(BIT_GET(simctrl, 8)) {
+            term_req = true;
+            sw_ret_code = BITS_GET(simctrl, 7, 0);
+            tb->dut_->orion_soc->memory->mem[(VDEV_SIMCTRL_ADDR - MEM_ADDR)/4] = 
+                BIT_SET(tb->dut_->orion_soc->memory->mem[(VDEV_SIMCTRL_ADDR - MEM_ADDR)/4], 8, 0);
+        }
+    }
+
+
     int run() {
         // Run the simulation
         SIMLOG("Starting simulation\n");
-        int rv = 0;
 
         SIMLOG("Resetting SoC\n");
         tb->reset(RESET_CYCLES);
@@ -118,78 +226,69 @@ public:
         LOG(printf("----------------------------------------\n");)
 
         // Tick the simulation
-        uint32_t finish_pc = 0;
-        bool finish_req = false;
-        uint32_t instr_done = 0;
-        while(!tb->finished() && tb->get_cycles() < max_cycles) {
-            // if(tb->get_cycles() % 10000 == 0) {
-            //     SIMLOG("  - %lu cycles\n", tb->get_cycles());
-            // }
-
-            tb->tick();
-            
-            // Check for EBREAK instruction
-            finish_req = got_finish(&finish_pc);
-            if(finish_req) {
+        while(1) {
+            if(tb->finished()) {
+                term_pc = *signal_ptrs.pc;
+                term_cause = TERM_CAUSE_FINISH;
                 break;
             }
 
-            // For IPC Calculation
-            if (*signal_ptrs.instr_valid & 0x1) {
-                instr_done++;
+            if(tb->get_cycles() >= max_cycles) {
+                term_pc = *signal_ptrs.pc;
+                term_cause = TERM_CAUSE_MAX_CYCLES;
+                break;
             }
-
-            // SIM_TIMER
-            uint64_t cycles = tb->get_cycles();
-            uint32_t lo = (uint32_t)cycles;
-            uint32_t hi = (uint32_t)(cycles >> 32);
-            uint32_t idx_lo  = (TIMER_ADDR/4);
-            uint32_t idx_hi  = (TIMER_ADDR_HI/4);
-            // write into memory directly, regardless of what the core is doing
-            tb->dut_->orion_soc->memory->mem[idx_lo] = lo;
-            tb->dut_->orion_soc->memory->mem[idx_hi] = hi;
-
-            // SIMUART
-            if((*signal_ptrs.instr_valid & 0x1) && 
-                (*signal_ptrs.mem_wmask & 0x1) &&
-                (*signal_ptrs.mem_addr == CONSOLE_ADDR)) {
-                printf("%c", *signal_ptrs.mem_wdata & 0xFF);
+            
+            if(term_req) {
+                term_pc = *signal_ptrs.pc;
+                term_cause = TERM_CAUSE_TERM_REQ;
+                break;
             }
+            
+            // Tick clock once
+            tb->tick();
+            
+            // Evaluate the VDEV registers
+            eval_vdev();
 
+            // Dump log
             if(log_f) {
                 sim_log();
             }
+            
+            // Increment the instruction retired counter
+            if (*signal_ptrs.instr_valid & 0x1) {
+                instret++;
+            }
         }
-
 
         LOG(printf("----------------------------------------\n");)
-        SIMLOG("Instructions executed: %u\n", instr_done);
-        SIMLOG("IPC: %.2f\n", (float)instr_done/(float)tb->get_cycles());
-        SIMLOG("Simulation finished @ %lu cycles\n", tb->get_cycles());
+        SIMLOG("Instructions executed: %lu\n", instret);
+        SIMLOG("IPC: %.6f\n", (float)instret/(float)tb->get_cycles());
+        SIMLOG("Cycles: %lu (Time: %lu ps)\n", tb->get_cycles(), tb->get_time());       
+        SIMLOG("Simulation finished @ PC: 0x%08x)\n", term_pc);
 
-        if(tb->get_cycles() >= max_cycles) {
-            SIMLOG("  Reached maximum cycles: %lu\n", max_cycles);
-            rv = 0;
-        } else if(tb->finished()) {
-            SIMLOG("  $finish called from RTL\n");
-            rv = 1;
-        } else if (finish_req) {
-            SIMLOG("  EBreak hit at PC: 0x%08x\n", finish_pc);
-            rv = 0;
-        }
-        else {
-            SIMLOG("  Unknown reason\n");
-            rv = -1;
+        // Check for termination cause
+        int rv = 0;
+        switch(term_cause) {
+            case TERM_CAUSE_FINISH:
+                SIMLOG("  $finish called from RTL\n");
+                rv = 1;
+                break;
+            case TERM_CAUSE_MAX_CYCLES:
+                SIMLOG("  Reached maximum cycles (%lu)\n", max_cycles);
+                rv = 1;
+                break;
+            case TERM_CAUSE_TERM_REQ:
+                SIMLOG("  Termination request from software (retcode: %d)\n", sw_ret_code);
+                rv = sw_ret_code;
+                break;
+            default:
+                SIMLOG("  Unknown termination cause\n");
+                rv = -1;
+                break;
         }
         return rv;
-    }
-
-    bool got_finish(uint32_t *ebreak_pc) {
-        if ((*signal_ptrs.instr_valid & 0x1) && *signal_ptrs.instr == RV_EBREAK) {
-            *ebreak_pc = *signal_ptrs.pc;    // save the PC of the EBREAK instruction
-            return true;
-        }
-        return false;
     }
 
     void open_trace(const std::string &filename) {
@@ -325,6 +424,16 @@ private:
     Testbench<Vorion_soc> *tb;
     uint64_t max_cycles = 10000000;
 
+    // Retired instruction counter
+    uint64_t instret = 0;
+    
+    // Simulation control
+    bool         term_req    = false;
+    uint32_t     term_pc     = 0;
+    Term_cause_t term_cause  = TERM_CAUSE_UNKNOWN;
+    int          sw_ret_code = 0;
+
+    // Signal pointers
     struct {
         bool *instr_valid;
         uint32_t *instr;

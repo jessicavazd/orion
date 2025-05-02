@@ -25,10 +25,10 @@ _start:
 
 # ===== exit function =====
 _exit:
-    li a0, 1                # any nonzero value
+    li t1, 1                # any nonzero value
     la t0, tohost           # get address of `tohost`
-    sw a0, 0(t0)            # write to tohost (Spike sees it and exits)
-    ebreak                  # for orionsim
+    sw t1, 0(t0)            # write to tohost (Spike sees it and exits)
+    jal exit                # for orionsim
     nop;nop;nop;nop;        # Fill up the pipeline after ebreak to prevent garbage execution
 
 

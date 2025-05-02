@@ -60,7 +60,5 @@ SECTIONS
     } > RAM
 }
 
-PROVIDE(_stack_pointer  = ORIGIN(RAM) + LENGTH(RAM) - 0x10);
-PROVIDE(_console_addr   = ORIGIN(RAM) + LENGTH(RAM) - 0x4);
-PROVIDE(_timer_addr_hi  = ORIGIN(RAM) + LENGTH(RAM) - 0x8);
-PROVIDE(_timer_addr_lo  = ORIGIN(RAM) + LENGTH(RAM) - 0xC);
+PROVIDE(_stack_pointer  = ORIGIN(RAM) + LENGTH(RAM) - 0x20);
+PROVIDE(__vdev_base_addr = ORIGIN(RAM) + LENGTH(RAM) - 0x20);

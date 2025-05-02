@@ -1,6 +1,6 @@
-#include "console.h"
+#include <stdio.h>
 
 int main() {
-    console_puts("Hello, World!\n");
-    console_puts("  -- From C\n");
+    puts("Hello, World!\n");
+    puts("  -- From C\n");
 }
