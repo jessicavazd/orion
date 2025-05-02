@@ -14,6 +14,9 @@
 
 #define CONSOLE_ADDR (MEM_ADDR + MEM_SIZE - 0x4)
 
+#define TIMER_ADDR    (MEM_SIZE - 0xC)  // low word
+#define TIMER_ADDR_HI (MEM_SIZE - 0x8)  // high word
+
 #define RESET_CYCLES 2
 
 #define RV_EBREAK 0x00100073
@@ -135,6 +138,16 @@ public:
             if (*signal_ptrs.instr_valid & 0x1) {
                 instr_done++;
             }
+
+            // SIM_TIMER
+            uint64_t cycles = tb->get_cycles();
+            uint32_t lo = (uint32_t)cycles;
+            uint32_t hi = (uint32_t)(cycles >> 32);
+            uint32_t idx_lo  = (TIMER_ADDR/4);
+            uint32_t idx_hi  = (TIMER_ADDR_HI/4);
+            // write into memory directly, regardless of what the core is doing
+            tb->dut_->orion_soc->memory->mem[idx_lo] = lo;
+            tb->dut_->orion_soc->memory->mem[idx_hi] = hi;
 
             // SIMUART
             if((*signal_ptrs.instr_valid & 0x1) && 
