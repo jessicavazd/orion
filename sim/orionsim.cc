@@ -178,21 +178,27 @@ public:
 
     void eval_vdev() {
         // Evaluate the VDEV registers
-        
-        // Console register (TX)
-        //printf("CONSOLEREG B: 0x%08x\n", tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4]);
-        if(BIT_GET(tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 16)) {
-            // DEBUG
-            //SIMLOG("Console TX: 0x%02x\n", BITS_GET(tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 7, 0));
 
-            uint8_t tx_data = BITS_GET(tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 7, 0);
-            putchar(tx_data);
-            fflush(stdout);
-
-            // Clear TX valid bit
-            tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4] = 
-                BIT_SET(tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 16, 0);
+        // SIMUART
+        if((*signal_ptrs.instr_valid & 0x1) && 
+            (*signal_ptrs.mem_wmask & 0x1) &&
+            (*signal_ptrs.mem_addr == VDEV_CONSOLE_ADDR)) {
+                putchar(*signal_ptrs.mem_wdata & 0xFF);
+                fflush(stdout);
         }
+
+        // // Console register (TX)
+        // if(BIT_GET(tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 16)) {
+        //     // DEBUG
+
+        //     uint8_t tx_data = BITS_GET(tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 7, 0);
+        //     putchar(tx_data);
+        //     fflush(stdout);
+
+        //     // Clear TX valid bit
+        //     tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4] = 
+        //         BIT_SET(tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 16, 0);
+        // }
 
         // TODO: Console register (RX)
 
@@ -245,11 +251,11 @@ public:
                 break;
             }
             
-            // Tick clock once
-            tb->tick();
-            
             // Evaluate the VDEV registers
             eval_vdev();
+
+            // Tick clock once
+            tb->tick();
 
             // Dump log
             if(log_f) {

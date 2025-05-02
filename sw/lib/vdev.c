@@ -13,10 +13,10 @@ extern unsigned int __vdev_base_addr;
 
 void vdev_putchar(char c) {
     // set the console tx register
-    uint32_t val = REG32(VDEV_CONSOLE_ADDR);
-    val = (val & 0xFFFFFF00) | c;       // write char
-    val = val | (1 << 16);              // set tx valid bit 
-    REG32(VDEV_CONSOLE_ADDR) = val;
+    // uint32_t val = REG32(VDEV_CONSOLE_ADDR);
+    // val = (val & 0xFFFFFF00) | c;       // write char
+    // val = val | (1 << 16);              // set tx valid bit 
+    REG8(VDEV_CONSOLE_ADDR) = c;
 }
 
 uint32_t vdev_cycles() {
@@ -36,9 +36,6 @@ uint32_t vdev_instreth() {
 }
 
 void vdev_exit(int8_t retcode) {
-    // set the exit code
-    uint32_t val = REG32(VDEV_SIMCTRL_ADDR);
-    val = (val & 0xFFFFFF00) | retcode; // write exit code
-    val = val | (1 << 8);               // set finish request bit
-    REG32(VDEV_SIMCTRL_ADDR) = val;
+    // Exit routine is implemented in start.S
+    asm volatile ("j _exit");
 }

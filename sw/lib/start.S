@@ -25,11 +25,24 @@ _start:
 
 # ===== exit function =====
 _exit:
-    li t1, 1                # any nonzero value
-    la t0, tohost           # get address of `tohost`
-    sw t1, 0(t0)            # write to tohost (Spike sees it and exits)
-    jal exit                # for orionsim
-    nop;nop;nop;nop;        # Fill up the pipeline after ebreak to prevent garbage execution
+    // a0 contains exit code
+    andi a0, a0, 0xff   # 1 Byte return code supported
+    
+    // Spike exit routine
+    li t0, 1            # any nonzero value
+    la t1, tohost       # get address of `tohost`
+    sw t0, 0(t1)        # write to tohost (Spike sees it and exits)
+
+    // Orionsim exit routine
+    la  t0, __vdev_base_addr
+    ori a0, a0, 0x100   # Set finish request bit
+    sw  a0, 0x1c(t0)    # Write return code to VDEV_SIMCTRL_ADDR
+    
+    ebreak              # This forces spike to immediately exit
+    nop;nop;nop;nop;    # Fill up the pipeline after ebreak to prevent garbage execution
+
+    // Unreachable (inf loop)
+1:  j 1b
 
 
 # ---------------------------------------

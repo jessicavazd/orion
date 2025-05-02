@@ -3,7 +3,6 @@
 
 void exit(int status) {
     vdev_exit(status);
-    __builtin_unreachable();  /* tell the compiler “this path won’t execute” */
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -18,4 +17,3 @@ uint64_t instret() {
     } while (hi1 != hi2);
     return ((uint64_t)hi1 << 32) | lo;
 }
-
