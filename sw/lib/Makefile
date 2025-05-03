@@ -24,16 +24,16 @@ default: build
 build: $(BUILD_DIR)/$(LIBTINYC)
 
 $(BUILD_DIR)/$(LIBTINYC): $(OBJS)
-	@echo "Building $(LIBTINYC)"
+	@printf "$(CLR_BL)[+] Building $(LIBTINYC)$(CLR_NC)\n"
 	ar rcs $@ $^ 
 	$(RISCV_TOOLCHAIN_PREFIX)objdump -htd $@ > $(basename $@).lst
 
 $(BUILD_DIR)/%.o: %.c
-	@echo "Compiling $<"
+	@printf "$(CLR_BL)[+] Compiling $< $(CLR_NC)\n"
 	$(RISCV_TOOLCHAIN_PREFIX)gcc $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/%.o: %.S
-	@echo "Compiling $<"
+	@printf "$(CLR_BL)[+] Compiling $<$(CLR_NC)\n"
 	$(RISCV_TOOLCHAIN_PREFIX)gcc $(CFLAGS) -c $< -o $@
 
 ################################################################################

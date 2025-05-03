@@ -15,7 +15,7 @@ LFLAGS := -T $(ORION_HOME)/sw/lib/link/link.ld -Wl,-Map=$(BUILD_DIR)/$(basename 
 
 SRCS += $(ORION_HOME)/sw/lib/start.S
 
-ORIONSIM_FLAGS:= 
+ORIONSIM_FLAGS?= 
 ifeq ($(TRACE), 1)
     # Get the trace format from simulator
     ORIONSIM_TRACE_TYPE:= $(shell orionsim --help | grep -oP 'Trace type:\s*\K\w+' | tr '[:upper:]' '[:lower:]')

@@ -9,6 +9,8 @@
 
 #include "Vorion_soc_headers.h"
 
+#define MAX_SIM_IITERATIONS 10000000
+
 // Get/Set/Clr bits in a word
 #define BIT_GET(x, n)           ((x) & (1 << (n)))
 #define BIT_SET(x, n, v)        ((v) ? ((x) | (1 << (n))) : ((x) & ~(1 << (n))))
@@ -428,7 +430,7 @@ public:
 
 private:
     Testbench<Vorion_soc> *tb;
-    uint64_t max_cycles = 10000000;
+    uint64_t max_cycles = MAX_SIM_IITERATIONS;
 
     // Retired instruction counter
     uint64_t instret = 0;

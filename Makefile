@@ -1,9 +1,9 @@
 include common.mk
 
-default: sim
+default: lib sim
 
 .PHONY: clean
-clean: clean-sim
+clean: clean-lib clean-sim
 
 ################################################################################
 # OrionSim
@@ -22,3 +22,26 @@ sim:
 clean-sim:
 	@echo -e "$(CLR_GR)>> Cleaning OrionSim$(CLR_NC)"
 	$(MAKE) -C sim clean
+
+
+################################################################################
+# LibTinyC
+################################################################################
+.PHONY: lib
+lib:
+	@echo -e "$(CLR_GR)>> Building LibTinyC$(CLR_NC)"
+	$(MAKE) -C sw/lib
+
+.PHONY: clean-lib
+clean-lib:
+	@echo -e "$(CLR_GR)>> Cleaning LibTinyC$(CLR_NC)"
+	$(MAKE) -C sw/lib clean
+
+
+################################################################################
+# Run Tests
+################################################################################
+.PHONY: test
+test: sim lib
+	@echo -e "$(CLR_GR)>> Running Tests$(CLR_NC)"
+	bash scripts/run_tests.sh
