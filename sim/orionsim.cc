@@ -9,7 +9,7 @@
 
 #include "Vorion_soc_headers.h"
 
-#define MAX_SIM_IITERATIONS 10000000
+#define SIM_MAX_CYCLES 10000000
 
 // Get/Set/Clr bits in a word
 #define BIT_GET(x, n)           ((x) & (1 << (n)))
@@ -101,13 +101,12 @@ verbosity_t verbosity = DEFAULT;
 #endif
 
 std::string banner = 
-"  ____       _              _____ _\n"
-" / __ \\     (_)            / ____(_)\n"
-"| |  | |_ __ _  ___  _ __ | (___  _ _ __ ___\n"
-"| |  | | '__| |/ _ \\| '_ \\ \\___ \\| | '_ ` _ \\ \n"
-"| |__| | |  | | (_) | | | |____) | | | | | | |\n"
-" \\____/|_|  |_|\\___/|_| |_|_____/|_|_| |_| |_|\n"
-"==================================================\n";
+"  ___       _             ____  _\n"
+" / _ \\ _ __(_) ___  _ __ / ___|(_)_ __ ___\n"
+"| | | | '__| |/ _ \\| '_  \\___ \\| | '_ ` _ \\\n"
+"| |_| | |  | | (_) | | | |___) | | | | | | |\n"
+" \\___/|_|  |_|\\___/|_| |_|____/|_|_| |_| |_|\n"
+"=============================================\n";
 
 std::string get_masked_hexstr(uint32_t data, uint8_t mask) {
     char buf[9] = {}; // Up to 4 bytes * 2 hex digits = 8 + null terminator
@@ -430,7 +429,7 @@ public:
 
 private:
     Testbench<Vorion_soc> *tb;
-    uint64_t max_cycles = MAX_SIM_IITERATIONS;
+    uint64_t max_cycles = SIM_MAX_CYCLES;
 
     // Retired instruction counter
     uint64_t instret = 0;

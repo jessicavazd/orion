@@ -1,3 +1,3 @@
 #pragma once
 
-#define CLK_FREQ 50000000
+#define CLK_FREQ 10000000

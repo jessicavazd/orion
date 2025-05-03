@@ -8,7 +8,7 @@ SRCS := \
 
 CFLAGS += -O2 \
           -I. -Ibarebones \
-          -DITERATIONS=10 \
+          -DITERATIONS=40 \
           -DHAS_FLOAT=0 \
           -DHAS_TIME_H=0 \
           -DHAS_STDIO=1 \
@@ -18,5 +18,7 @@ CFLAGS += -O2 \
 FLAGS_STR:= $(CFLAGS)
 CFLAGS += -DFLAGS_STR='"$(FLAGS_STR)"'
 EXEC?=  coremark.elf
+
+ORIONSIM_FLAGS+= --max-cycles 1000000000
 
 include ../common.mk

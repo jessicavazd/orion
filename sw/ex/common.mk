@@ -8,7 +8,6 @@ TRACE?=
 LOG?=
 
 ################################################################################
-RVPREFIX := riscv64-unknown-elf
 CFLAGS += -Wall -O0
 CFLAGS += -march=rv32i -mabi=ilp32 -nostartfiles -ffreestanding
 CFLAGS += -I$(ORION_HOME)/sw/lib/include
@@ -17,7 +16,7 @@ LFLAGS += -L $(ORION_HOME)/sw/lib/build -ltinyc
 
 SRCS?=
 
-ORIONSIM_FLAGS:= 
+ORIONSIM_FLAGS?= 
 ifeq ($(TRACE), 1)
     # Get the trace format from simulator
     ORIONSIM_TRACE_TYPE:= $(shell orionsim --help | grep -oP 'Trace type:\s*\K\w+' | tr '[:upper:]' '[:lower:]')
@@ -40,9 +39,9 @@ build: $(BUILD_DIR)/$(EXEC)
 
 $(BUILD_DIR)/$(EXEC): $(SRCS)
 	mkdir -p $(BUILD_DIR)
-	$(RVPREFIX)-gcc $(CFLAGS) $^ -o $@ $(LFLAGS)
-	$(RVPREFIX)-objdump -dt $@ > $(basename $@).lst
-	$(RVPREFIX)-objcopy -O binary $@ $(basename $@).bin
+	$(RISCV_TOOLCHAIN_PREFIX)gcc $(CFLAGS) $^ -o $@ $(LFLAGS)
+	$(RISCV_TOOLCHAIN_PREFIX)objdump -dt $@ > $(basename $@).lst
+	$(RISCV_TOOLCHAIN_PREFIX)objcopy -O binary $@ $(basename $@).bin
 	xxd -e -c 4 $(basename $@).bin | awk '{print $$2}' > $(basename $@).hex
 
 

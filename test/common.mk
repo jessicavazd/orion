@@ -38,9 +38,9 @@ build: $(BUILD_DIR)/$(EXEC)
 
 $(BUILD_DIR)/$(EXEC): $(SRCS)
 	mkdir -p $(BUILD_DIR)
-	$(RVPREFIX)-gcc $(CFLAGS) $^ -o $@ $(LFLAGS)
-	$(RVPREFIX)-objdump -dt $@ > $(basename $@).lst
-	$(RVPREFIX)-objcopy -O binary $@ $(basename $@).bin
+	$(RISCV_TOOLCHAIN_PREFIX)gcc $(CFLAGS) $^ -o $@ $(LFLAGS)
+	$(RISCV_TOOLCHAIN_PREFIX)objdump -dt $@ > $(basename $@).lst
+	$(RISCV_TOOLCHAIN_PREFIX)objcopy -O binary $@ $(basename $@).bin
 	xxd -e -c 4 $(basename $@).bin | awk '{print $$2}' > $(basename $@).hex
 
 
