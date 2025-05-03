@@ -8,10 +8,10 @@ TRACE?=
 LOG?=
 
 ################################################################################
-CFLAGS += -Wall -O0
+CFLAGS += -Wall
 CFLAGS += -march=rv32i -mabi=ilp32 -nostartfiles -ffreestanding
 CFLAGS += -I$(ORION_HOME)/sw/lib/include
-LFLAGS := -T $(ORION_HOME)/sw/lib/link/link.ld -Wl,-Map=$(BUILD_DIR)/$(basename $(EXEC)).map
+LFLAGS += -T $(ORION_HOME)/sw/lib/link/link.ld -Wl,-Map=$(BUILD_DIR)/$(basename $(EXEC)).map
 LFLAGS += -L $(ORION_HOME)/sw/lib/build -ltinyc
 
 SRCS?=

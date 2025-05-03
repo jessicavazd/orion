@@ -83,7 +83,9 @@ echo "$ orionsim ${ORIONSIM_FLAGS} ${EXEC_HEX}"
 orionsim ${ORIONSIM_FLAGS} ${EXEC_HEX} || true
 
 # Check if the logs are identical
-diff -y --width=140 ${SPIKE_LOG} ${ORIONSIM_LOG} | expand -t 8 > ${DIFF_FILE}
+diff -y --suppress-common-lines --width=140 ${SPIKE_LOG} ${ORIONSIM_LOG} | expand -t 8 > ${DIFF_FILE}
+
+# Search for differences in the logs
 grep -qE '\||<|>' ${DIFF_FILE} && \
     printf "${CLR_RD}[!] Verification failed: Differences found${CLR_NC}\n" && exit 1 || \
     printf "${CLR_GR}[+] Verification success: No differences found in logs${CLR_NC}\n"
