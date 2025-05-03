@@ -10,17 +10,17 @@ clean: clean-lib clean-sim
 ################################################################################
 .PHONY: lint
 lint:
-	@echo -e "$(CLR_GR)>> Performing Lint Check$(CLR_NC)"
+	@printf "$(CLR_GR)>> Performing Lint Check$(CLR_NC)\n"
 	$(MAKE) -C sim lint
 
 .PHONY: sim
 sim:
-	@echo -e "$(CLR_GR)>> Building OrionSim$(CLR_NC)"
+	@printf "$(CLR_GR)>> Building OrionSim$(CLR_NC)\n"
 	$(MAKE) -C sim
 
 .PHONY: clean-sim
 clean-sim:
-	@echo -e "$(CLR_GR)>> Cleaning OrionSim$(CLR_NC)"
+	@printf "$(CLR_GR)>> Cleaning OrionSim$(CLR_NC)\n"
 	$(MAKE) -C sim clean
 
 
@@ -29,12 +29,12 @@ clean-sim:
 ################################################################################
 .PHONY: lib
 lib:
-	@echo -e "$(CLR_GR)>> Building LibTinyC$(CLR_NC)"
+	@printf "$(CLR_GR)>> Building LibTinyC$(CLR_NC)\n"
 	$(MAKE) -C sw/lib
 
 .PHONY: clean-lib
 clean-lib:
-	@echo -e "$(CLR_GR)>> Cleaning LibTinyC$(CLR_NC)"
+	@printf "$(CLR_GR)>> Cleaning LibTinyC$(CLR_NC)\n"
 	$(MAKE) -C sw/lib clean
 
 
@@ -43,5 +43,5 @@ clean-lib:
 ################################################################################
 .PHONY: test
 test: sim lib
-	@echo -e "$(CLR_GR)>> Running Tests$(CLR_NC)"
+	@printf "$(CLR_GR)>> Running Tests$(CLR_NC)\n"
 	bash scripts/run_tests.sh

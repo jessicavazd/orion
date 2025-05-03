@@ -12,11 +12,11 @@ CLR_NC="\033[0m"
 
 # Check if spike and orionsiom are installed
 if ! command -v spike > /dev/null 2>&1; then
-    echo -e "${CLR_RD}ERROR:${CLR_NC} spike could not be found"
+    printf "${CLR_RD}ERROR:${CLR_NC} spike could not be found\n"
     exit 1
 fi
 if ! command -v orionsim > /dev/null 2>&1; then
-    echo -e "${CLR_RD}ERROR:${CLR_NC} orionsim could not be found"
+    printf "${CLR_RD}ERROR:${CLR_NC} orionsim could not be found\n"
     exit 1
 fi
 

@@ -98,48 +98,48 @@ default: sim
 ########################################
 .PHONY: sim
 sim: $(EXE)
-	@echo -e "$(CLR_BL)[+] Orionsim built successfully!$(CLR_NC)"
+	@printf "$(CLR_BL)[+] Orionsim built successfully!$(CLR_NC)\n"
 
 # # EXE <- verilated objs, C++ objs
 $(EXE): $(VERILATED_DIR)/V$(VTOP)__ALL.a $(OBJS)
-	@echo -e "$(CLR_BL)[+] Linking $@$(CLR_NC)"
+	@printf "$(CLR_BL)[+] Linking $@$(CLR_NC)\n"
 	$(CC) $(OBJS) -o $@ $(LDFLAGS)
 
 # Verilation: verilated_objs <- verilog srcs
 $(VERILATED_DIR)/V$(VTOP)__ALL.a: $(VSRCS)
-	@echo -e "$(CLR_BL)[+] Generating verilated sources$(CLR_NC)"
+	@printf "$(CLR_BL)[+] Generating verilated sources$(CLR_NC)\n"
 	$(VC) $(VFLAGS) $^
 
-	@echo -e "$(CLR_BL)[+] Generating combined header file$(CLR_NC)"
+	@printf "$(CLR_BL)[+] Generating combined header file$(CLR_NC)\n"
 	printf "#pragma once\n" > $(VERILATED_DIR)/V$(VTOP)_headers.h
 	find $(VERILATED_DIR) -name "*.h" -printf "#include <%P>\n" >> $(VERILATED_DIR)/V$(VTOP)_headers.h
 
-	@echo -e "$(CLR_BL)[+] Compiling verilated sources$(CLR_NC)"
+	@printf "$(CLR_BL)[+] Compiling verilated sources$(CLR_NC)\n"
 	$(MAKE) -s -C $(VERILATED_DIR) -f V$(VTOP).mk
 
 	
 # C++ obj <- C++ src (in current dir)
 $(OBJ_DIR)/%.o: %.cc $(VERILATED_DIR)/V$(VTOP)__ALL.a testbench.h
-	@echo -e "$(CLR_BL)[+] Compiling $@$(CLR_NC)"
+	@printf "$(CLR_BL)[+] Compiling $@$(CLR_NC)\n"
 	$(CC) $(CXXFLAGS) -c $< -o $@
 
 
 .PHONY: iverilog
 iverilog: $(VSRCS)
-	@echo -e "$(CLR_BL)[+] Generating iverilog sources$(CLR_NC)"
+	@printf "$(CLR_BL)[+] Generating iverilog sources$(CLR_NC)\n"
 	iverilog -g2012 -o $(BIN_DIR)/orionsim_iverilog $(VSRCS) -I$(ORION_HOME)/rtl/common
  
 
 
 .PHONY: lint
 lint: $(VSRCS)
-	$(VC) $(VFLAGS) --lint-only $(VSRCS) && echo -e "$(CLR_GR)[+] Linting Success$(CLR_NC)" || \
-	{ echo -e "$(CLR_RD)[!] Linting failed$(CLR_NC)"; exit 1; }
+	$(VC) $(VFLAGS) --lint-only $(VSRCS) && printf "$(CLR_GR)[+] Linting Success$(CLR_NC)\n" || \
+	{ printf "$(CLR_RD)[!] Linting failed$(CLR_NC)\n"; exit 1; }
 
 
 .PHONY: clean
 clean:
-	@echo -e "Cleaning up..."
+	@printf "Cleaning up...\n"
 	rm -f $(OBJ_DIR)/*
 	rm -f $(VERILATED_DIR)/*
 	rm -f $(EXE)

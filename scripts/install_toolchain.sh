@@ -21,15 +21,15 @@ CLR_OR="\e[33m"
 CLR_NC="\e[0m"
 
 function info() {
-    echo -e "${CLR_GR}>> $1${CLR_NC}"
+    printf "${CLR_GR}>> $1${CLR_NC}\n"
 }
 
 function error() {
-    echo -e "${CLR_RD}>> $1${CLR_NC}"
+    printf "${CLR_RD}>> $1${CLR_NC}\n"
 }
 
 function warn() {
-    echo -e "${CLR_OR}>> $1${CLR_NC}"
+    printf "${CLR_OR}>> $1${CLR_NC}\n"
 }
 
 ################################################################################

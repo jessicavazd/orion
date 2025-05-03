@@ -26,10 +26,10 @@ echo "[+] Running Orion tests"
         if [ -d "$testdir" ]; then
             ((n_total++))
             testname=$(basename "$testdir")
-            echo -e "\n------------------------------------------------------------"
-            echo -e "[+] Compiling test: $testname"
+            printf "\n------------------------------------------------------------\n"
+            printf "[+] Compiling test: $testname\n"
             make -C "$testdir" clean build
-            echo -e "\n[+] Running test: $testname"
+            printf "\n[+] Running test: $testname\n"
 
             if make -C "$testdir" run-verif ORIONSIM_FLAGS="--verbosity 1"; then
                 test_results["$testname"]="PASS"
