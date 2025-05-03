@@ -15,6 +15,10 @@ CFLAGS += -O2 \
           -DHAS_PRINTF=1 \
           -DMULTITHREAD=1
 
+# NOTE: the following flag disables timing functions and allows for proper verification
+# with spike using `make run-verif`. Uncomment when needed.
+# CFLAGS += -DNO_GET_CYCLES
+
 FLAGS_STR:= $(CFLAGS)
 CFLAGS += -DFLAGS_STR='"$(FLAGS_STR)"'
 EXEC?=  coremark.elf

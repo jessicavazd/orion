@@ -49,7 +49,11 @@ volatile ee_s32 seed5_volatile = 0;
 CORETIMETYPE
 barebones_clock()
 {
+#ifdef NO_GET_CYCLES
+    return 0;
+#else
     return (CORETIMETYPE)cycles();
+#endif
     // #error
     //     "You must implement a method to measure time in barebones_clock()! This function should return current time.\n"
 }
