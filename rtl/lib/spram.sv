@@ -32,11 +32,15 @@ module spram #(
     logic [DATAW-1:0] mem [0:DEPTH-1] /* verilator public */;
 
     // Optional memory initialization
+    `ifndef SYNTHESIS
+    // Yosys slang infers this as multiple drivers on variable mem
+    // It's a RAM, so generally it won't be initialized anyways
     initial begin
         if (INIT_FILE != "") begin
             $readmemh(INIT_FILE, mem);
         end
     end
+    `endif
 
     // Sequential write
     always_ff @(posedge clk_i) begin: mem_write

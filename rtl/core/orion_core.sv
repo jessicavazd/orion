@@ -55,6 +55,8 @@ import orion_types::*;
 
     logic load_use_stall_req;
 
+    logic mem_stall_o;
+
 
     ////////////////////////////////////////////////////////////////////////////
     // Stall logic
@@ -161,8 +163,6 @@ import orion_types::*;
 
     ////////////////////////////////////////////////////////////////////////////
     // Memory stage
-    logic mem_stall_o;
-
     memory memory_stg (
         // .clk_i          (clk_i),
         // .rst_i          (rst_i),

@@ -214,8 +214,13 @@ import orion_types::*;
     end
 
     // illegal instruction detection
+    `ifndef SYNTHESIS
     always_ff @(posedge clk_i) if(!rst_i && id_ex_o.valid && exception_illegal_instr) $warning("Illegal instruction detected: %h (PC: %h)", instr, if_id_i.pc);
+    `endif
+    
+    
     `UNUSED_VAR(exception_illegal_instr)
+
 
     ////////////////////////////////////////////////////////////////////////////
     // Register File

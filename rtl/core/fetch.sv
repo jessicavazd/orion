@@ -20,7 +20,6 @@ import orion_types::*;
 );
 
     logic discard_imem_resp;
-    assign discard_imem_resp = 1'b0;    
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
             discard_imem_resp <= 1'b0;
