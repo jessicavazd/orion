@@ -23,7 +23,7 @@ echo "[+] Running Orion tests"
     echo "Ran on: $(date '+%Y-%m-%d %H:%M:%S')"
 
     for testdir in ${ORION_HOME}/test/*/; do
-        if [ -d "$testdir" ]; then
+        if [ -d "$testdir" ] && [ "$(basename "$testdir")" != "include" ]; then
             ((n_total++))
             testname=$(basename "$testdir")
             printf "\n------------------------------------------------------------\n"
