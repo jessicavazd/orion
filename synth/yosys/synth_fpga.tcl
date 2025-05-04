@@ -32,7 +32,7 @@ set vsource [list \
     "$::env(ORION_HOME)/rtl/lib/spram.sv"    \
 ]
 
-set rd_vrlg_flags "-DSYNTHESIS_YOSYS -DSYNTHESIS -I$::env(ORION_HOME)/rtl/common"
+set rd_vrlg_flags "-DSYNTHESIS_YOSYS -DSYNTHESIS -DEN_RV32M_EXT -I$::env(ORION_HOME)/rtl/common"
 
 set topmodule orion_core
 ###############################################################################
