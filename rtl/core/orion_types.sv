@@ -11,6 +11,16 @@ parameter NUM_REGS  = 32;
 parameter RF_IDX_BITS = $clog2(NUM_REGS);
 
 ////////////////////////////////////////////////////////////////////////////////
+// Features
+
+`ifdef EN_RV32M_EXT
+parameter EN_RV32M_EXT = 1; // Enable RV32M extension
+`else
+parameter EN_RV32M_EXT = 0; // Disable RV32M extension
+`endif
+
+
+////////////////////////////////////////////////////////////////////////////////
 // Types
 typedef enum logic [6:0] {
     OP_LUI   = 7'b0110111, // load upper immediate (U-type)
@@ -21,7 +31,8 @@ typedef enum logic [6:0] {
     OP_LOAD  = 7'b0000011, // load (I-type)
     OP_STORE = 7'b0100011, // store (S-type)
     OP_IMM   = 7'b0010011, // immediate (I-type)
-    OP_REG   = 7'b0110011 // register (R-type)
+    OP_REG   = 7'b0110011, // register (R-type)
+    OP_SYSTEM= 7'b1110011  // system (I-type)
 } opcode_t;
 
 typedef enum logic [2:0] {
@@ -61,12 +72,23 @@ typedef enum logic [2:0] {
     CMP_OP_GEU  = 3'b111  
 } cmp_ops_t;
 
+typedef enum logic [2:0] {
+    MUL_OP_MUL    = 3'b000, 
+    MUL_OP_MULH   = 3'b001,
+    MUL_OP_MULHSU = 3'b010,
+    MUL_OP_MULHU  = 3'b011,
+    MUL_OP_DIV    = 3'b100,
+    MUL_OP_DIVU   = 3'b101, 
+    MUL_OP_REM    = 3'b110,
+    MUL_OP_REMU   = 3'b111
+} mul_ops_t;
+
 typedef enum logic [1:0] {
     SEL_ALU_OUT     = 2'b00,
     SEL_CMP_OUT     = 2'b01,
+    SEL_MUL_OUT     = 2'b10,
     SEL_PC_NEXT     = 2'b11
 }  ex_mux_sel_t;
-
 
 typedef enum logic [2:0] {
     FUNCT3_LS_B   = 3'b000,
@@ -153,6 +175,7 @@ typedef struct packed {
     logic                   rd_we;
     alu_ops_t               alu_op;
     cmp_ops_t               cmp_op;
+    mul_ops_t               mul_op;
     alu_sel_a_t             alu_sel_a;
     logic                   alu_sel_b_imm;
     logic                   cmp_sel_b_imm;

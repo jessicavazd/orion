@@ -22,16 +22,16 @@ import orion_types::*;
 
 ////////////////////////////////////////////////////////////////////////////////
 // ALU
-logic [31:0] alu_a;
-logic [31:0] alu_b;
-logic [31:0] alu_out;
+logic [XLEN-1:0] alu_a;
+logic [XLEN-1:0] alu_b;
+logic [XLEN-1:0] alu_out;
 
 // ALU:A mux
 always_comb begin
     unique case (id_ex_i.alu_sel_a)
         ALU_SEL_A_RS1   : alu_a = id_ex_i.rs1_v;
         ALU_SEL_A_PC    : alu_a = id_ex_i.pc;
-        ALU_SEL_A_ZERO  : alu_a = 32'b0;
+        ALU_SEL_A_ZERO  : alu_a = {XLEN{1'b0}};
         default         : alu_a = 'bx;
     endcase
 end
@@ -39,14 +39,14 @@ end
 // ALU:B mux
 assign alu_b = id_ex_i.alu_sel_b_imm ? id_ex_i.imm : id_ex_i.rs2_v;
 
-logic signed   [31:0] alu_as;
+logic signed [XLEN-1:0] alu_as;
 assign alu_as   =   signed'(alu_a);
 
 always_comb begin
     case (id_ex_i.alu_op)
         ALU_OP_ADD : alu_out = alu_a  +   alu_b;
         ALU_OP_SUB : alu_out = alu_a  -   alu_b;        // FIXME: can be optimized
-        ALU_OP_SLL : alu_out = alu_a  <<  alu_b[4:0];
+        ALU_OP_SLL : alu_out = alu_a  <<  alu_b[4:0];   // FIXME: What if XLEN is 64?
         ALU_OP_XOR : alu_out = alu_a  ^   alu_b;
         ALU_OP_SRL : alu_out = alu_a  >>  alu_b[4:0];
         ALU_OP_SRA : alu_out = unsigned'(alu_as >>> alu_b[4:0]);   // FIXME: unsigned typecast needed?
@@ -59,15 +59,15 @@ end
 ////////////////////////////////////////////////////////////////////////////////
 // Comparator
 
-logic   [31:0]  cmp_a;
-logic   [31:0]  cmp_b;
+logic   [XLEN-1:0]  cmp_a;
+logic   [XLEN-1:0]  cmp_b;
 logic           cmp_out;
 
 assign cmp_a    = id_ex_i.rs1_v;
 assign cmp_b    = id_ex_i.cmp_sel_b_imm ? id_ex_i.imm : id_ex_i.rs2_v;
 
-logic signed   [31:0] cmp_as;
-logic signed   [31:0] cmp_bs;
+logic signed   [XLEN-1:0] cmp_as;
+logic signed   [XLEN-1:0] cmp_bs;
 assign cmp_as   = signed'(cmp_a);
 assign cmp_bs   = signed'(cmp_b);
 
@@ -82,6 +82,102 @@ always_comb begin
         default    : cmp_out = 1'bx;
     endcase
 end
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Multiplier/Divider
+
+logic [2*XLEN-1:0] mul_out;
+logic [XLEN-1:0] div_out;
+logic use_high;
+logic use_div;
+
+generate
+    if(EN_RV32M_EXT) begin: mul_ext
+        // Multiplication signals
+        logic [2*XLEN-1:0] mul_a;
+        logic [2*XLEN-1:0] mul_b;
+        logic signed [2*XLEN-1:0] mul_as;
+        logic signed [2*XLEN-1:0] mul_bs;
+
+        assign mul_a    = {{XLEN{1'b0}}, id_ex_i.rs1_v};
+        assign mul_b    = {{XLEN{1'b0}}, id_ex_i.rs2_v};
+        assign mul_as   = signed'({{XLEN{id_ex_i.rs1_v[XLEN-1]}}, id_ex_i.rs1_v});
+        assign mul_bs   = signed'({{XLEN{id_ex_i.rs2_v[XLEN-1]}}, id_ex_i.rs2_v});
+
+
+        // Division signals
+        logic [XLEN-1:0] div_a;
+        logic [XLEN-1:0] div_b;
+        logic signed [XLEN-1:0] div_as;
+        logic signed [XLEN-1:0] div_bs;
+
+        assign div_a    = id_ex_i.rs1_v;
+        assign div_b    = id_ex_i.rs2_v;
+        assign div_as   = signed'(div_a);
+        assign div_bs   = signed'(div_b);
+
+        assign use_high = (id_ex_i.mul_op == MUL_OP_MULH || id_ex_i.mul_op == MUL_OP_MULHU || id_ex_i.mul_op == MUL_OP_MULHSU);
+        assign use_div = (id_ex_i.mul_op == MUL_OP_DIV || id_ex_i.mul_op == MUL_OP_DIVU || id_ex_i.mul_op == MUL_OP_REM || id_ex_i.mul_op == MUL_OP_REMU);
+
+        always_comb begin
+            mul_out = '0;
+            div_out = '0;
+            unique case (id_ex_i.mul_op)
+                MUL_OP_MUL, MUL_OP_MULH : mul_out = (mul_as * mul_bs);
+                MUL_OP_MULHSU           : mul_out = (mul_as * mul_b);
+                MUL_OP_MULHU            : mul_out = (mul_a  * mul_b);
+                MUL_OP_DIV    : begin
+                                    if (div_bs == 0) begin
+                                        div_out = {XLEN{1'b1}}; // divide by zero = -1 
+                                    end 
+                                    else if (div_as == {1'b1, {XLEN-1{1'b0}}} && div_bs == {XLEN{1'b1}}) begin // overflow (-(2**(XLEN-1))/-1) --> 0x8000_0000/0xFFFFFFFF
+                                        div_out = div_as; // overflow
+                                    end
+                                    else begin
+                                        div_out = (div_as / div_bs);
+                                    end
+                                end
+                MUL_OP_DIVU   : begin
+                                    if (div_b == 0) begin
+                                        div_out = {XLEN{1'b1}}; // divide by zero = -1
+                                    end else begin
+                                        div_out = (div_a  / div_b );
+                                    end
+                                end 
+                MUL_OP_REM    : begin
+                                    if (div_bs == 0) begin
+                                        div_out = div_as; // rem by zero = dividend 
+                                    end 
+                                    else if (div_as == {1'b1, {XLEN-1{1'b0}}} && div_bs == {XLEN{1'b1}}) begin // overflow (-(2**(XLEN-1))/-1)
+                                        div_out = {XLEN{1'b0}};
+                                    end
+                                    else begin
+                                        div_out = (div_as % div_bs);
+                                    end
+                                end
+                MUL_OP_REMU   : begin
+                                    if (div_b == 0) begin
+                                        div_out = div_a; // rem by zero = dividend 
+                                    end else begin
+                                        div_out = (div_a  % div_b );
+                                    end
+                                end
+                default       : begin
+                                    mul_out = 'x;
+                                    div_out = 'x;
+                                end
+            endcase
+        end
+    end 
+    else begin: no_mul_ext
+        assign mul_out = 'x;
+        assign div_out = 'x;
+        assign use_high = 'x;
+        assign use_div = 'x;
+        `UNUSED_VAR(id_ex_i.mul_op);
+    end
+endgenerate
 
 ////////////////////////////////////////////////////////////////////////////////
 // Memory Request Generation
@@ -127,8 +223,19 @@ logic [XLEN-1:0] rd_v;
 always_comb begin
     unique case (id_ex_i.ex_mux_sel)
         SEL_ALU_OUT : rd_v = alu_out;
-        SEL_CMP_OUT : rd_v = {31'b0, cmp_out};
-        SEL_PC_NEXT : rd_v = id_ex_i.pc + 32'd4;
+        SEL_CMP_OUT : rd_v = {{XLEN-1{1'b0}}, cmp_out};
+        SEL_MUL_OUT : begin
+                        if(EN_RV32M_EXT) begin
+                            if (use_div) begin
+                                rd_v = div_out;
+                            end else begin
+                                rd_v = use_high ? mul_out[2*XLEN-1:XLEN] : mul_out[XLEN-1:0];
+                            end
+                        end else begin
+                            rd_v = 'x;
+                        end
+                    end
+        SEL_PC_NEXT : rd_v = id_ex_i.pc + 'd4;
         default     : rd_v = 'bx;
     endcase
 end

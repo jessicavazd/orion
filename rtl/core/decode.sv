@@ -44,9 +44,13 @@ import orion_types::*;
     assign imm_u   = {instr[31:12], 12'b0};
     assign imm_j   = {{11{instr[31]}}, instr[31], instr[19:12], instr[20], instr[30:21], 1'b0};
 
+
+    logic exception_illegal_instr;
+
     always_comb begin 
         id_ex_o.alu_op          = ALU_OP_ADD;
         id_ex_o.cmp_op          = CMP_OP_EQ;
+        id_ex_o.mul_op          = MUL_OP_MUL;
         id_ex_o.rd_we           = 1'b0;
         id_ex_o.alu_sel_a       = ALU_SEL_A_RS1;
         id_ex_o.alu_sel_b_imm   = 1'b0;
@@ -58,24 +62,44 @@ import orion_types::*;
         id_ex_o.is_jump        = 1'b0;
         id_ex_o.is_jump_conditional = 1'b0;
 
+        exception_illegal_instr = 1'b0;
+
         unique case (opcode) 
             OP_REG : begin
-                unique case (funct3)
-                    FUNCT3_ADD  : id_ex_o.alu_op = funct7[5] ? ALU_OP_SUB : ALU_OP_ADD;
-                    FUNCT3_SLL  : id_ex_o.alu_op = ALU_OP_SLL;
-                    FUNCT3_XOR  : id_ex_o.alu_op = ALU_OP_XOR;
-                    FUNCT3_SR   : id_ex_o.alu_op = funct7[5] ? ALU_OP_SRA : ALU_OP_SRL;
-                    FUNCT3_OR   : id_ex_o.alu_op = ALU_OP_OR;
-                    FUNCT3_AND  : id_ex_o.alu_op = ALU_OP_AND;
-                    FUNCT3_SLT  : begin
-                                    id_ex_o.cmp_op      = CMP_OP_LT;
-                                    id_ex_o.ex_mux_sel  = SEL_CMP_OUT;
-                                end
-                    FUNCT3_SLTU : begin
-                                    id_ex_o.cmp_op      = CMP_OP_LTU;
-                                    id_ex_o.ex_mux_sel  = SEL_CMP_OUT;
-                                end
-                    default     : id_ex_o.alu_op = ALU_OP_ADD;
+                unique casez(funct7)
+                    7'b0?00000 : begin
+                        // Standard ALU instructions   
+                        unique case (funct3)
+                            FUNCT3_ADD  : id_ex_o.alu_op = funct7[5] ? ALU_OP_SUB : ALU_OP_ADD;
+                            FUNCT3_SLL  : id_ex_o.alu_op = ALU_OP_SLL;
+                            FUNCT3_XOR  : id_ex_o.alu_op = ALU_OP_XOR;
+                            FUNCT3_SR   : id_ex_o.alu_op = funct7[5] ? ALU_OP_SRA : ALU_OP_SRL;
+                            FUNCT3_OR   : id_ex_o.alu_op = ALU_OP_OR;
+                            FUNCT3_AND  : id_ex_o.alu_op = ALU_OP_AND;
+                            FUNCT3_SLT  : begin 
+                                            id_ex_o.cmp_op      = CMP_OP_LT;
+                                            id_ex_o.ex_mux_sel  = SEL_CMP_OUT;
+                                        end
+                            FUNCT3_SLTU : begin
+                                            id_ex_o.cmp_op      = CMP_OP_LTU;
+                                            id_ex_o.ex_mux_sel  = SEL_CMP_OUT;
+                                        end
+                            default     : exception_illegal_instr = 1'b1;
+                        endcase
+                    end
+                
+                    7'b0000001 : begin
+                        if(EN_RV32M_EXT) begin
+                            // Multiply and divide instructions
+                            id_ex_o.mul_op = mul_ops_t'(funct3);
+                            id_ex_o.ex_mux_sel = SEL_MUL_OUT;
+                        end 
+                        else begin
+                            exception_illegal_instr = 1'b1;
+                        end
+                    end
+                
+                    default : exception_illegal_instr = 1'b1;
                 endcase
                 id_ex_o.alu_sel_b_imm   = 1'b0;
                 id_ex_o.cmp_sel_b_imm   = 1'b0;
@@ -97,7 +121,7 @@ import orion_types::*;
                                     id_ex_o.cmp_op      = CMP_OP_LTU;
                                     id_ex_o.ex_mux_sel  = SEL_CMP_OUT;
                                 end
-                    default     : id_ex_o.alu_op = ALU_OP_ADD;
+                    default     : exception_illegal_instr = 1'b1;
                 endcase 
                 id_ex_o.alu_sel_b_imm   = 1'b1;
                 id_ex_o.cmp_sel_b_imm   = 1'b1;
@@ -138,7 +162,7 @@ import orion_types::*;
                 // calculate target addr = pc + imm_j
                 // set pc_next = target addr
                 // set rd = pc + 4
-                // flush  //fixme
+                // flush 
                 id_ex_o.alu_op          = ALU_OP_ADD;
                 id_ex_o.alu_sel_a       = ALU_SEL_A_PC;
                 id_ex_o.alu_sel_b_imm   = 1'b1;
@@ -151,7 +175,7 @@ import orion_types::*;
                 // calculate target addr = rs1 + imm_i
                 // set pc_next = target addr
                 // set rd = pc + 4
-                // flush //fixme
+                // flush 
                 id_ex_o.alu_op          = ALU_OP_ADD;
                 id_ex_o.alu_sel_a       = ALU_SEL_A_RS1;
                 id_ex_o.alu_sel_b_imm   = 1'b1;
@@ -164,7 +188,7 @@ import orion_types::*;
                 // calculate target addr = pc + imm_b
                 // set pc_next = target addr
                 // cmp rs1 & rs2 & set br_taken accordingly
-                // flush //fixme
+                // flush 
                 id_ex_o.alu_op              = ALU_OP_ADD;
                 id_ex_o.alu_sel_a           = ALU_SEL_A_PC;
                 id_ex_o.alu_sel_b_imm       = 1'b1;
@@ -175,10 +199,23 @@ import orion_types::*;
                 id_ex_o.is_jump             = 1'b1;
                 id_ex_o.is_jump_conditional = 1'b1;
             end
+            OP_SYSTEM: begin
+                if(imm_i[11:0] == 12'b000000000001 && rs1_s==5'b00000 && funct3==3'b000 && rd_s==5'b00000) begin
+                    // EBREAK instruction (NOP)
+                end
+                else begin
+                    exception_illegal_instr = 1'b1;
+                end
+            end
         default : begin
+            exception_illegal_instr = 1'b1;
         end
         endcase
     end
+
+    // illegal instruction detection
+    always_ff @(posedge clk_i) if(!rst_i && id_ex_o.valid && exception_illegal_instr) $warning("Illegal instruction detected: %h (PC: %h)", instr, if_id_i.pc);
+    `UNUSED_VAR(exception_illegal_instr)
 
     ////////////////////////////////////////////////////////////////////////////
     // Register File

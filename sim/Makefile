@@ -53,6 +53,12 @@ VFLAGS:= --cc -Wall -DSIMULATION --Mdir $(VERILATED_DIR)
 VFLAGS+= --top-module $(VTOP)
 VFLAGS+= -I$(ORION_HOME)/rtl/common
 
+###################################
+# Orion Config
+VFLAGS+= -DEN_RV32M_EXT
+
+###################################
+
 # CPP options
 CC:= g++
 CXXFLAGS:= -std=c++14 -Wall -Wextra -faligned-new -Wno-unused-parameter -Wno-unused-variable -Wno-sign-compare -Wno-array-bounds

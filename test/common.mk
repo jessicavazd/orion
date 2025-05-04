@@ -10,7 +10,7 @@ LOG?=
 ################################################################################
 RVPREFIX := riscv64-unknown-elf
 CFLAGS += -Wall -O0
-CFLAGS += -march=rv32i -mabi=ilp32 -nostartfiles -ffreestanding
+CFLAGS += -march=rv32im -mabi=ilp32 -nostartfiles -ffreestanding -I ../include
 LFLAGS := -T $(ORION_HOME)/sw/lib/link/link.ld -Wl,-Map=$(BUILD_DIR)/$(basename $(EXEC)).map
 
 SRCS += $(ORION_HOME)/sw/lib/start.S
@@ -26,7 +26,7 @@ ifeq ($(LOG), 1)
     ORIONSIM_FLAGS += --log $(ORION_HOME)/sim.log
 endif
 
-SPIKE_FLAGS := --isa=rv32i -m0x10000:0x10000
+SPIKE_FLAGS := --isa=rv32im -m0x10000:0x10000
 
 default: build
 

@@ -287,7 +287,7 @@ public:
                 rv = 1;
                 break;
             case TERM_CAUSE_TERM_REQ:
-                SIMLOG("  Termination request from software (retcode: %d)\n", sw_ret_code);
+                SIMLOG("  Termination request from software (retcode: %s%d%s)\n", sw_ret_code == 0 ? "\033[32m" : "\033[31m", sw_ret_code, "\033[0m");
                 rv = sw_ret_code;
                 break;
             default:
