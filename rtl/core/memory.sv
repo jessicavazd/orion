@@ -14,7 +14,9 @@ import orion_types::*;
     input  ex_mem_t             ex_mem_i,
 
     output mem_id_t             mem_id_o,
-    output mem_wb_t             mem_wb_o
+    output mem_wb_t             mem_wb_o,
+
+    output mem_csrf_t           mem_csrf_o
 );
 
 // DMEM RESP
@@ -46,6 +48,8 @@ assign mem_wb_o.rd_v   = rd_v;
 assign mem_wb_o.rd_s   = ex_mem_i.rd_s;
 assign mem_wb_o.rd_we  = ex_mem_i.rd_we;
 
+assign mem_wb_o.is_csr_op = ex_mem_i.is_csr_op;
+
 assign stall_o = mem_stall;
 
 
@@ -55,6 +59,12 @@ assign mem_id_o.rd_we   = mem_wb_o.rd_we;
 assign mem_id_o.rd_s    = mem_wb_o.rd_s;
 assign mem_id_o.rd_v    = mem_wb_o.rd_v;
 
+// Interface to CSR regfile
+assign mem_csrf_o.addr        = ex_mem_i.csr_addr;
+assign mem_csrf_o.op          = ex_mem_i.csr_op;
+assign mem_csrf_o.operand     = ex_mem_i.csr_operand;
+assign mem_csrf_o.ren         = ex_mem_i.csr_ren && ex_mem_i.valid;
+assign mem_csrf_o.wen         = ex_mem_i.csr_wen && ex_mem_i.valid;
 
 
 `ifndef SYNTHESIS

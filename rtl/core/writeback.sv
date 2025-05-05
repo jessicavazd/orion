@@ -5,12 +5,19 @@ import orion_types::*;
     // input  logic        rst_i,
 
     input  mem_wb_t     mem_wb_i,
-    output wb_id_t      wb_id_o
+    output wb_id_t      wb_id_o,
+
+    input  csrf_wb_t    csrf_wb_i,
+    output wb_csrf_t    wb_csrf_o
 );
 
     assign wb_id_o.rd_we  = mem_wb_i.valid && mem_wb_i.rd_we;
     assign wb_id_o.rd_s   = mem_wb_i.rd_s;
-    assign wb_id_o.rd_v   = mem_wb_i.rd_v;
+    assign wb_id_o.rd_v   = mem_wb_i.is_csr_op ? csrf_wb_i.rd_v : mem_wb_i.rd_v;
+
+
+    // Interface to CSR regfile
+    assign wb_csrf_o.instr_retired = mem_wb_i.valid; 
 
 
 `ifndef SYNTHESIS

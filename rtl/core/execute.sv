@@ -248,6 +248,13 @@ assign ex_mem_o.ld_str_type = id_ex_i.ld_str_type;
 assign ex_mem_o.is_load     = id_ex_i.is_load;
 assign ex_mem_o.is_store    = id_ex_i.is_store;
 
+assign ex_mem_o.is_csr_op   = id_ex_i.is_csr_op;
+assign ex_mem_o.csr_ren     = id_ex_i.csr_ren;
+assign ex_mem_o.csr_wen     = id_ex_i.csr_wen;
+assign ex_mem_o.csr_addr    = id_ex_i.imm[11:0];
+assign ex_mem_o.csr_op      = id_ex_i.csr_op;
+assign ex_mem_o.csr_operand = id_ex_i.csr_operand;
+
 // Forwarding interface to decode
 assign ex_id_o.valid        = ex_mem_o.valid;
 assign ex_id_o.rd_we        = ex_mem_o.rd_we;

@@ -40,6 +40,10 @@ import orion_types::*;
     mem_id_t mem_id;
     wb_id_t  wb_id;
 
+    mem_csrf_t mem_csrf;
+    wb_csrf_t  wb_csrf;
+    csrf_wb_t csrf_wb;
+
     /*
         Definition of a stall in ith stage:
         - ith stage will set its output valid to 0 so that next stages take a bubble
@@ -174,7 +178,9 @@ import orion_types::*;
         .ex_mem_i       (ex_mem_reg),
 
         .mem_id_o       (mem_id),
-        .mem_wb_o       (mem_wb)
+        .mem_wb_o       (mem_wb),
+
+        .mem_csrf_o     (mem_csrf)
     );
 
     pipe_reg #(
@@ -195,10 +201,21 @@ import orion_types::*;
         // .rst_i          (rst_i),
 
         .mem_wb_i       (mem_wb_reg),
-        .wb_id_o        (wb_id)
+        .wb_id_o        (wb_id),
+        .csrf_wb_i      (csrf_wb),
+        .wb_csrf_o      (wb_csrf)
     );
 
+    /////////////////////////////////////////////////////////////////////////////
+    // CSR REGFILE
+    csrfile crf (
+        .clk_i          (clk_i),
+        .rst_i          (rst_i),
 
+        .mem_csrf_i     (mem_csrf),
+        .wb_csrf_i      (wb_csrf),
+        .csrf_wb_o      (csrf_wb)
+    );
 
     // `UNDRIVEN_VAR(dmem_addr_o)
     // `UNDRIVEN_VAR(dmem_wdata_o)

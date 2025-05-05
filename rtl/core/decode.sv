@@ -44,8 +44,10 @@ import orion_types::*;
     assign imm_u   = {instr[31:12], 12'b0};
     assign imm_j   = {{11{instr[31]}}, instr[31], instr[19:12], instr[20], instr[30:21], 1'b0};
 
-
+    logic csr_use_uimm;
     logic exception_illegal_instr;
+
+    imm_sel_t imm_sel;
 
     always_comb begin 
         id_ex_o.alu_op          = ALU_OP_ADD;
@@ -61,9 +63,12 @@ import orion_types::*;
         id_ex_o.is_store       = 1'b0;
         id_ex_o.is_jump        = 1'b0;
         id_ex_o.is_jump_conditional = 1'b0;
-
+        id_ex_o.is_csr_op      = 1'b0;
+        
+        imm_sel                 = IMM_SEL_I;
+        csr_use_uimm            = 1'b0;
         exception_illegal_instr = 1'b0;
-
+        
         unique case (opcode) 
             OP_REG : begin
                 unique casez(funct7)
@@ -125,28 +130,28 @@ import orion_types::*;
                 endcase 
                 id_ex_o.alu_sel_b_imm   = 1'b1;
                 id_ex_o.cmp_sel_b_imm   = 1'b1;
-                id_ex_o.imm             = imm_i;
+                imm_sel                 = IMM_SEL_I;
                 id_ex_o.rd_we           = 1'b1;
             end
             OP_LUI: begin
                 id_ex_o.alu_op          = ALU_OP_ADD;
                 id_ex_o.alu_sel_a       = ALU_SEL_A_ZERO;
                 id_ex_o.alu_sel_b_imm   = 1'b1;
-                id_ex_o.imm             = imm_u;
+                imm_sel                 = IMM_SEL_U;
                 id_ex_o.rd_we           = 1'b1;
             end
             OP_AUIPC: begin
                 id_ex_o.alu_op          = ALU_OP_ADD;
                 id_ex_o.alu_sel_a       = ALU_SEL_A_PC;
                 id_ex_o.alu_sel_b_imm   = 1'b1;
-                id_ex_o.imm             = imm_u;
+                imm_sel                 = IMM_SEL_U;
                 id_ex_o.rd_we           = 1'b1;
             end
             OP_LOAD: begin
                 id_ex_o.alu_op          = ALU_OP_ADD;
                 id_ex_o.alu_sel_a       = ALU_SEL_A_RS1;
                 id_ex_o.alu_sel_b_imm   = 1'b1;
-                id_ex_o.imm             = imm_i;
+                imm_sel                 = IMM_SEL_I;
                 id_ex_o.rd_we           = 1'b1;
                 id_ex_o.is_load         = 1'b1;
             end
@@ -154,7 +159,7 @@ import orion_types::*;
                 id_ex_o.alu_op          = ALU_OP_ADD;
                 id_ex_o.alu_sel_a       = ALU_SEL_A_RS1;
                 id_ex_o.alu_sel_b_imm   = 1'b1;
-                id_ex_o.imm             = imm_s;
+                imm_sel                 = IMM_SEL_S;
                 id_ex_o.rd_we           = 1'b0;
                 id_ex_o.is_store        = 1'b1;
             end
@@ -166,7 +171,7 @@ import orion_types::*;
                 id_ex_o.alu_op          = ALU_OP_ADD;
                 id_ex_o.alu_sel_a       = ALU_SEL_A_PC;
                 id_ex_o.alu_sel_b_imm   = 1'b1;
-                id_ex_o.imm             = imm_j;
+                imm_sel                 = IMM_SEL_J;
                 id_ex_o.rd_we           = 1'b1;
                 id_ex_o.ex_mux_sel      = SEL_PC_NEXT;
                 id_ex_o.is_jump         = 1'b1;
@@ -179,7 +184,7 @@ import orion_types::*;
                 id_ex_o.alu_op          = ALU_OP_ADD;
                 id_ex_o.alu_sel_a       = ALU_SEL_A_RS1;
                 id_ex_o.alu_sel_b_imm   = 1'b1;
-                id_ex_o.imm             = imm_i;
+                imm_sel                 = IMM_SEL_I;
                 id_ex_o.rd_we           = 1'b1;
                 id_ex_o.ex_mux_sel      = SEL_PC_NEXT;
                 id_ex_o.is_jump         = 1'b1;
@@ -192,7 +197,7 @@ import orion_types::*;
                 id_ex_o.alu_op              = ALU_OP_ADD;
                 id_ex_o.alu_sel_a           = ALU_SEL_A_PC;
                 id_ex_o.alu_sel_b_imm       = 1'b1;
-                id_ex_o.imm                 = imm_b;
+                imm_sel                     = IMM_SEL_B;
                 id_ex_o.rd_we               = 1'b0;
                 id_ex_o.cmp_sel_b_imm       = 1'b0;
                 id_ex_o.cmp_op              = cmp_ops_t'(funct3);
@@ -200,16 +205,49 @@ import orion_types::*;
                 id_ex_o.is_jump_conditional = 1'b1;
             end
             OP_SYSTEM: begin
-                if(imm_i[11:0] == 12'b000000000001 && rs1_s==5'b00000 && funct3==3'b000 && rd_s==5'b00000) begin
-                    // EBREAK instruction (NOP)
-                end
-                else begin
-                    exception_illegal_instr = 1'b1;
-                end
+                unique case (funct3)
+                    3'b000 : begin
+                            if(imm_i[11:0] == 12'b000000000001 && rs1_s==5'b00000 && rd_s==5'b00000) begin
+                                // EBREAK instruction (NOP)
+                            end
+                            else 
+                                exception_illegal_instr = 1'b1;
+                        end
+                    /*
+                        CSRRW:  rs1_s -> [RF] -> rs1_v -> [CSR Write|CSR read (old val)] -> [RF::rd_s]
+
+                        CSRRS:  rs1_s -> [RF] -> rs1_v -> OR -> [CSR Write|CSR read (old val)] -> [RF::rd_s]
+                                                           ^                 |
+                                                           +-----------------+
+                        CSRRC:  rs1_s -> [RF] -> rs1_v -> NOT -> AND -> [CSR Write|CSR read (old val)] -> [RF::rd_s]
+                                                                 ^                 |
+                                                                 +-----------------+
+                    */
+                    FUNCT3_CSRRW, FUNCT3_CSRRS, FUNCT3_CSRRC: begin
+                        id_ex_o.csr_ren         = !(funct3 == FUNCT3_CSRRW && rd_s == 5'd0);
+                        id_ex_o.csr_wen         = !(funct3 != FUNCT3_CSRRW && rs1_s == 5'd0);
+                        id_ex_o.csr_op          = csr_ops_t'(funct3[1:0]);
+                        csr_use_uimm            = 1'b0;
+                        id_ex_o.rd_we           = 1'b1;
+                        id_ex_o.is_csr_op       = 1'b1;
+                    end
+
+                    FUNCT3_CSRRWI, FUNCT3_CSRRSI, FUNCT3_CSRRCI: begin
+                        id_ex_o.csr_ren         = !(funct3 == FUNCT3_CSRRW && rd_s == 5'd0);    // uimm is same as rs1_s
+                        id_ex_o.csr_wen         = !(funct3 != FUNCT3_CSRRW && rs1_s == 5'd0);
+                        id_ex_o.csr_op          = csr_ops_t'(funct3[1:0]);
+                        csr_use_uimm            = 1'b1;
+                        id_ex_o.rd_we           = 1'b1;
+                        id_ex_o.is_csr_op       = 1'b1;
+                    end
+                    default : begin
+                        exception_illegal_instr = 1'b1;
+                    end
+                endcase
             end
-        default : begin
-            exception_illegal_instr = 1'b1;
-        end
+            default : begin
+                exception_illegal_instr = 1'b1;
+            end
         endcase
     end
 
@@ -299,6 +337,22 @@ import orion_types::*;
     assign id_ex_o.rs1_v = rs1_v_fwd;
     assign id_ex_o.rs2_v = rs2_v_fwd;
     assign id_ex_o.rd_s  = rd_s;
+
+    // Immediate select
+    always_comb begin
+        case(imm_sel)
+            IMM_SEL_I: id_ex_o.imm = imm_i;
+            IMM_SEL_S: id_ex_o.imm = imm_s;
+            IMM_SEL_B: id_ex_o.imm = imm_b;
+            IMM_SEL_U: id_ex_o.imm = imm_u;
+            IMM_SEL_J: id_ex_o.imm = imm_j;
+            default: id_ex_o.imm = 'x;
+        endcase
+    end
+
+    assign id_ex_o.csr_operand = csr_use_uimm ? {{XLEN-5{1'b0}}, rs1_s} : rs1_v_fwd;
+    // NOTE: csr_addr is passed in id_ex_o.imm to execute stage to save flops
+
 
 `ifndef SYNTHESIS
     // Debug signals

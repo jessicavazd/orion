@@ -39,6 +39,7 @@ VSRCS+= $(ORION_HOME)/rtl/core/regfile.sv
 VSRCS+= $(ORION_HOME)/rtl/core/execute.sv
 VSRCS+= $(ORION_HOME)/rtl/core/memory.sv
 VSRCS+= $(ORION_HOME)/rtl/core/writeback.sv
+VSRCS+= $(ORION_HOME)/rtl/core/csrfile.sv
 VSRCS+= $(ORION_HOME)/rtl/soc/orion_soc.sv
 VSRCS+= $(wildcard $(ORION_HOME)/rtl/lib/*.sv)
 
