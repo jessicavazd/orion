@@ -1,0 +1,56 @@
+digraph orion_soc {
+    graph [
+        label       = "Orion SoC"
+        labelloc    = t
+        fontname    = "Helvetica"
+        fontsize    = 15
+        rankdir     = LR
+        nodesep     = 0.5
+        ranksep     = 0.9
+        compound    = true
+    ]
+    node [fontname="Helvetica" fontsize=10 shape=box style=filled]
+    edge [fontname="Helvetica" fontsize=9]
+
+    subgraph cluster_cpu {
+        label       = "orion_wb"
+        style       = filled
+        fillcolor   = "#e8f0fe"
+        color       = "#5577cc"
+        penwidth    = 2
+        fontsize    = 12
+
+        subgraph cluster_core {
+            label       = "orion_core"
+            style       = filled
+            fillcolor   = "#ddeeff"
+            color       = "#7799dd"
+            fontsize    = 11
+
+            F [label="Fetch"     fillcolor="#cce5ff"]
+            D [label="Decode"    fillcolor="#cce5ff"]
+            E [label="Execute"   fillcolor="#cce5ff"]
+            M [label="Memory"    fillcolor="#cce5ff"]
+            W [label="Writeback" fillcolor="#cce5ff"]
+
+            F -> D -> E -> M -> W
+        }
+
+        IA [label="WB Adapter\n(iport)"  fillcolor="#ffe8cc"]
+        DA [label="WB Adapter\n(dport)"  fillcolor="#ffe8cc"]
+
+        F -> IA [ltail=cluster_core]
+        E -> DA [ltail=cluster_core]
+    }
+
+    XBAR [label="Crossbar2_wb\n\nMEM  → 0x0001_0000\nUART → 0x1000_0000" fillcolor="#fff0cc"]
+    ARB  [label="Arbiter2_wb\n\nm0 = dport  (hi pri)\nm1 = iport"         fillcolor="#fff0cc"]
+    RAM  [label="spram_wb\n\n16 KB\n0x0001_0000\n(reset vector)"           fillcolor="#d4edda"]
+    UART [label="uart_wb\n\n0x1000_0000"                                   fillcolor="#fce8d5"]
+
+    DA -> XBAR [xlabel="dport_wb"]
+    IA -> ARB  [xlabel="iport_wb"]
+    XBAR -> ARB  [xlabel="memdport_wb"]
+    XBAR -> UART [xlabel="uart_wb"]
+    ARB  -> RAM  [xlabel="mem_wb"]
+}

@@ -4,6 +4,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     exit 1
 fi
 
+# Load modules (if any)
+# module load verilator
+# module load riscv64-multilib
+
 n_errors=0
 
 # ORION_HOME environment variable points to root of Orion project

@@ -5,3 +5,5 @@ build/
 *.fst
 *.hex
 *.log
+
+.bak/
