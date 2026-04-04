@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <csignal>
 
 #include "argparse.h"
 #include "testbench.h"
@@ -124,8 +125,12 @@ enum Term_cause_t {
     TERM_CAUSE_UNKNOWN,     // Unknown termination cause
     TERM_CAUSE_FINISH,      // $finish called from RTL
     TERM_CAUSE_MAX_CYCLES,  // Reached maximum cycles
-    TERM_CAUSE_TERM_REQ     // Termination request from software
+    TERM_CAUSE_TERM_REQ,    // Termination request from software
+    TERM_CAUSE_INTERRUPTED  // SIGINT (Ctrl+C)
 };
+
+static volatile sig_atomic_t g_interrupted = 0;
+static void sigint_handler(int) { g_interrupted = 1; }
 
 class OrionSim {
 public:
@@ -143,26 +148,26 @@ public:
         tb->register_rst((bool*)&tb->dut_->rst_i);
 
         // Setup scope pointers
-        signal_ptrs.instr_valid = (bool*)&tb->dut_->orion_soc->core->writeback_stg->dbg_valid;
-        signal_ptrs.instr       = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_instr;
-        signal_ptrs.pc          = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_pc;
-        signal_ptrs.rs1_s       = (uint8_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rs1_s;
-        signal_ptrs.rs2_s       = (uint8_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rs2_s;
-        signal_ptrs.rd_s        = (uint8_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rd_s;
-        signal_ptrs.rs1_v       = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rs1_v;
-        signal_ptrs.rs2_v       = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rs2_v;
-        signal_ptrs.rd_v        = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rd_v;
-        signal_ptrs.rd_we       = (bool*)&tb->dut_->orion_soc->core->writeback_stg->dbg_rd_we;
-        signal_ptrs.mem_addr    = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_mem_addr;
-        signal_ptrs.mem_rmask   = (uint8_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_mem_rmask;
-        signal_ptrs.mem_wmask   = (uint8_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_mem_wmask;
-        signal_ptrs.mem_rdata   = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_mem_rdata;
-        signal_ptrs.mem_wdata   = (uint32_t*)&tb->dut_->orion_soc->core->writeback_stg->dbg_mem_wdata;
+        signal_ptrs.instr_valid = (bool*)&tb->dut_->orion_soc->core_wb->orion->writeback_stg->dbg_valid;
+        signal_ptrs.instr       = (uint32_t*)&tb->dut_->orion_soc->core_wb->orion->writeback_stg->dbg_instr;
+        signal_ptrs.pc          = (uint32_t*)&tb->dut_->orion_soc->core_wb->orion->writeback_stg->dbg_pc;
+        signal_ptrs.rs1_s       = (uint8_t*)&tb->dut_->orion_soc->core_wb->orion->writeback_stg->dbg_rs1_s;
+        signal_ptrs.rs2_s       = (uint8_t*)&tb->dut_->orion_soc->core_wb->orion->writeback_stg->dbg_rs2_s;
+        signal_ptrs.rd_s        = (uint8_t*)&tb->dut_->orion_soc->core_wb->orion->writeback_stg->dbg_rd_s;
+        signal_ptrs.rs1_v       = (uint32_t*)&tb->dut_->orion_soc->core_wb->orion->writeback_stg->dbg_rs1_v;
+        signal_ptrs.rs2_v       = (uint32_t*)&tb->dut_->orion_soc->core_wb->orion->writeback_stg->dbg_rs2_v;
+        signal_ptrs.rd_v        = (uint32_t*)&tb->dut_->orion_soc->core_wb->orion->writeback_stg->dbg_rd_v;
+        signal_ptrs.rd_we       = (bool*)&tb->dut_->orion_soc->core_wb->orion->writeback_stg->dbg_rd_we;
+        signal_ptrs.mem_addr    = (uint32_t*)&tb->dut_->orion_soc->core_wb->orion->writeback_stg->dbg_mem_addr;
+        signal_ptrs.mem_rmask   = (uint8_t*)&tb->dut_->orion_soc->core_wb->orion->writeback_stg->dbg_mem_rmask;
+        signal_ptrs.mem_wmask   = (uint8_t*)&tb->dut_->orion_soc->core_wb->orion->writeback_stg->dbg_mem_wmask;
+        signal_ptrs.mem_rdata   = (uint32_t*)&tb->dut_->orion_soc->core_wb->orion->writeback_stg->dbg_mem_rdata;
+        signal_ptrs.mem_wdata   = (uint32_t*)&tb->dut_->orion_soc->core_wb->orion->writeback_stg->dbg_mem_wdata;
 
         // Clear vdev registers
         for(int addr = VDEV_ADDR; addr < (VDEV_ADDR + VDEV_SIZE); addr+=4) {
             unsigned mem_index = (addr - MEM_ADDR) / 4;
-            tb->dut_->orion_soc->memory->mem[mem_index] = 0x00000000;
+            tb->dut_->orion_soc->ram->mem[mem_index] = 0x00000000;
         }
     }
 
@@ -189,36 +194,36 @@ public:
         }
 
         // // Console register (TX)
-        // if(BIT_GET(tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 16)) {
+        // if(BIT_GET(tb->dut_->orion_soc->ram->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 16)) {
         //     // DEBUG
 
-        //     uint8_t tx_data = BITS_GET(tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 7, 0);
+        //     uint8_t tx_data = BITS_GET(tb->dut_->orion_soc->ram->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 7, 0);
         //     putchar(tx_data);
         //     fflush(stdout);
 
         //     // Clear TX valid bit
-        //     tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4] = 
-        //         BIT_SET(tb->dut_->orion_soc->memory->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 16, 0);
+        //     tb->dut_->orion_soc->ram->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4] = 
+        //         BIT_SET(tb->dut_->orion_soc->ram->mem[(VDEV_CONSOLE_ADDR - MEM_ADDR)/4], 16, 0);
         // }
 
         // TODO: Console register (RX)
 
         // Cycle register
         uint64_t cycles = tb->get_cycles();
-        tb->dut_->orion_soc->memory->mem[(VDEV_CYCLE_ADDR    - MEM_ADDR)/4] = (uint32_t)cycles;
-        tb->dut_->orion_soc->memory->mem[(VDEV_CYCLE_ADDR_HI - MEM_ADDR)/4] = (uint32_t)(cycles >> 32);
+        tb->dut_->orion_soc->ram->mem[(VDEV_CYCLE_ADDR    - MEM_ADDR)/4] = (uint32_t)cycles;
+        tb->dut_->orion_soc->ram->mem[(VDEV_CYCLE_ADDR_HI - MEM_ADDR)/4] = (uint32_t)(cycles >> 32);
 
         // Instruction retired register
-        tb->dut_->orion_soc->memory->mem[(VDEV_INSTRET_ADDR    - MEM_ADDR)/4] = (uint32_t)instret;
-        tb->dut_->orion_soc->memory->mem[(VDEV_INSTRET_ADDR_HI - MEM_ADDR)/4] = (uint32_t)(instret >> 32);
+        tb->dut_->orion_soc->ram->mem[(VDEV_INSTRET_ADDR    - MEM_ADDR)/4] = (uint32_t)instret;
+        tb->dut_->orion_soc->ram->mem[(VDEV_INSTRET_ADDR_HI - MEM_ADDR)/4] = (uint32_t)(instret >> 32);
         
         // Simulation control register
-        uint32_t simctrl = tb->dut_->orion_soc->memory->mem[(VDEV_SIMCTRL_ADDR - MEM_ADDR)/4];
+        uint32_t simctrl = tb->dut_->orion_soc->ram->mem[(VDEV_SIMCTRL_ADDR - MEM_ADDR)/4];
         if(BIT_GET(simctrl, 8)) {
             term_req = true;
             sw_ret_code = BITS_GET(simctrl, 7, 0);
-            tb->dut_->orion_soc->memory->mem[(VDEV_SIMCTRL_ADDR - MEM_ADDR)/4] = 
-                BIT_SET(tb->dut_->orion_soc->memory->mem[(VDEV_SIMCTRL_ADDR - MEM_ADDR)/4], 8, 0);
+            tb->dut_->orion_soc->ram->mem[(VDEV_SIMCTRL_ADDR - MEM_ADDR)/4] = 
+                BIT_SET(tb->dut_->orion_soc->ram->mem[(VDEV_SIMCTRL_ADDR - MEM_ADDR)/4], 8, 0);
         }
     }
 
@@ -249,6 +254,12 @@ public:
             if(term_req) {
                 term_pc = *signal_ptrs.pc;
                 term_cause = TERM_CAUSE_TERM_REQ;
+                break;
+            }
+
+            if(g_interrupted) {
+                term_pc = *signal_ptrs.pc;
+                term_cause = TERM_CAUSE_INTERRUPTED;
                 break;
             }
             
@@ -289,6 +300,10 @@ public:
             case TERM_CAUSE_TERM_REQ:
                 SIMLOG("  Termination request from software (retcode: %s%d%s)\n", sw_ret_code == 0 ? "\033[32m" : "\033[31m", sw_ret_code, "\033[0m");
                 rv = sw_ret_code;
+                break;
+            case TERM_CAUSE_INTERRUPTED:
+                SIMLOG("  Interrupted (Ctrl+C)\n");
+                rv = 1;
                 break;
             default:
                 SIMLOG("  Unknown termination cause\n");
@@ -339,7 +354,7 @@ public:
             
             // Write the data word to the memory
             uint32_t memory_word_index = (addr /*- MEM_ADDR*/) / 4;
-            tb->dut_->orion_soc->memory->mem[memory_word_index] = data;
+            tb->dut_->orion_soc->ram->mem[memory_word_index] = data;
             addr += 4;
             nbytes_written += 4;
         }
@@ -356,7 +371,7 @@ public:
             return;
         }
         for(uint32_t word_indx = 0; word_indx < MEM_SIZE / 4; word_indx++) {
-            uint32_t data = tb->dut_->orion_soc->memory->mem[word_indx];
+            uint32_t data = tb->dut_->orion_soc->ram->mem[word_indx];
             dump_file << std::hex << std::setw(8) << std::setfill('0') << data << "\n";
         }
         dump_file.close();
@@ -491,6 +506,8 @@ int main(int argc, char** argv) {
         }
         verbosity = verb;
     }
+
+    signal(SIGINT, sigint_handler);
 
     // Create the simulator instance
     OrionSim sim;

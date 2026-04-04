@@ -104,42 +104,6 @@ typedef enum logic [2:0] {
 ////////////////////////////////////////////////////////////////////////////////
 // Interfaces
 
-// Cache
-// interface cache_if #(
-//     parameter ADDRW = 32,
-//     parameter DATAW = 32
-// );
-//     logic [ADDRW-1:0]   addr;
-//     logic               valid;
-//     logic [DATAW-1:0]   rdata;
-//     logic [DATAW-1:0]   wdata;
-//     logic [DATAW/8-1:0] mask;
-//     logic               we;
-//     logic               ack;
-
-//     modport master (
-//         output addr,
-//         output valid,
-//         input  rdata,
-//         output wdata,
-//         output mask,
-//         output we,
-//         input  ack
-//     );
-
-//     modport slave (
-//         input  addr,
-//         input  valid,
-//         output rdata,
-//         input  wdata,
-//         input  mask,
-//         input  we,
-//         output ack
-//     );
-// endinterface
-
-
-
 typedef struct packed {
     logic [XLEN-1:0]        pc;
     logic [XLEN-1:0]        instr;

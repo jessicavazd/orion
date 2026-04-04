@@ -68,7 +68,7 @@ import orion_types::*;
             OP_REG : begin
                 unique casez(funct7)
                     7'b0?00000 : begin
-                        // Standard ALU instructions   
+                        // Standard ALU instructions
                         unique case (funct3)
                             FUNCT3_ADD  : id_ex_o.alu_op = funct7[5] ? ALU_OP_SUB : ALU_OP_ADD;
                             FUNCT3_SLL  : id_ex_o.alu_op = ALU_OP_SLL;
@@ -76,7 +76,7 @@ import orion_types::*;
                             FUNCT3_SR   : id_ex_o.alu_op = funct7[5] ? ALU_OP_SRA : ALU_OP_SRL;
                             FUNCT3_OR   : id_ex_o.alu_op = ALU_OP_OR;
                             FUNCT3_AND  : id_ex_o.alu_op = ALU_OP_AND;
-                            FUNCT3_SLT  : begin 
+                            FUNCT3_SLT  : begin
                                             id_ex_o.cmp_op      = CMP_OP_LT;
                                             id_ex_o.ex_mux_sel  = SEL_CMP_OUT;
                                         end
@@ -86,24 +86,25 @@ import orion_types::*;
                                         end
                             default     : exception_illegal_instr = 1'b1;
                         endcase
+                        id_ex_o.rd_we = 1'b1;
                     end
-                
+
                     7'b0000001 : begin
                         if(EN_RV32M_EXT) begin
                             // Multiply and divide instructions
                             id_ex_o.mul_op = mul_ops_t'(funct3);
                             id_ex_o.ex_mux_sel = SEL_MUL_OUT;
-                        end 
+                            id_ex_o.rd_we = 1'b1;
+                        end
                         else begin
                             exception_illegal_instr = 1'b1;
                         end
                     end
-                
+
                     default : exception_illegal_instr = 1'b1;
                 endcase
                 id_ex_o.alu_sel_b_imm   = 1'b0;
                 id_ex_o.cmp_sel_b_imm   = 1'b0;
-                id_ex_o.rd_we           = 1'b1;
             end
             OP_IMM : begin;
                 unique case (funct3)

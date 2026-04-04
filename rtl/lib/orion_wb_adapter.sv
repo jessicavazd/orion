@@ -6,8 +6,8 @@ module orion_wb_adapter #(
     parameter SELW  = DATAW/8,
     parameter MASKW = SELW
 )(
-    input  logic                 clk_i,
-    input  logic                 rst_i,
+    // input  logic                 clk_i,
+    // input  logic                 rst_i,
 
     // Orion interface (Slave)
     input  logic [ADDRW-1:0]     or_addr_i,

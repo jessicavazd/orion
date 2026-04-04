@@ -4,7 +4,9 @@
 module orion_wb
 import orion_types::*;
 #(
-    parameter PC_RESET_ADDR = 32'h8000_0000
+    parameter PC_RESET_ADDR = 32'h8000_0000,
+
+    parameter SELW          = MASKW       // Inherit from orion_types
 )(
     input  wire         clk_i,
     input  wire         rst_i,
@@ -68,9 +70,6 @@ import orion_types::*;
         .ADDRW (ADDRW),
         .DATAW (XLEN)
     ) iport_adapter (
-        .clk_i      (clk_i),
-        .rst_i      (rst_i),
-
         .or_addr_i  (imem_addr_o),
         .or_rdata_o (imem_rdata_i),
         .or_wdata_i (32'b0),
@@ -83,7 +82,7 @@ import orion_types::*;
         .wbm_dat_o  (iport_wb_dat_o),
         .wbm_dat_i  (iport_wb_dat_i),
         .wbm_cyc_o  (iport_wb_cyc_o),
-        .wbm_stb_o  (iport_wb_sel_o),
+        .wbm_stb_o  (iport_wb_stb_o),
         .wbm_we_o   (iport_wb_we_o),
         .wbm_sel_o  (iport_wb_sel_o),
         .wbm_ack_i  (iport_wb_ack_i)
@@ -94,9 +93,6 @@ import orion_types::*;
         .ADDRW (ADDRW),
         .DATAW (XLEN)
     ) dport_adapter (
-        .clk_i      (clk_i),
-        .rst_i      (rst_i),
-
         .or_addr_i  (dmem_addr_o),
         .or_rdata_o (dmem_rdata_i),
         .or_wdata_i (dmem_wdata_o),
@@ -106,7 +102,7 @@ import orion_types::*;
         .or_resp_o  (dmem_resp_i),
 
         .wbm_adr_o  (dport_wb_adr_o),
-        .wbm_dat_o  (doptt_wb_dat_o),
+        .wbm_dat_o  (dport_wb_dat_o),
         .wbm_dat_i  (dport_wb_dat_i),
         .wbm_cyc_o  (dport_wb_cyc_o),
         .wbm_stb_o  (dport_wb_stb_o),

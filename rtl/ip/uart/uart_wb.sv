@@ -56,28 +56,28 @@ wire txfifo_empty_o;
 wire [7:0] txfifo_data_o;
 generate
     if (FIFO_EN) begin: fifo
-        FIFO_sync #(
+        fifo_sync #(
             .DEPTH(FIFO_DEPTH),
             .DATAW(8)
         ) rxfifo (
             .clk_i      (wb_clk_i),
             .rst_i      (wb_rst_i),
-            .we_i       (core_recv_buf_valid & reg_lcr[0]),
-            .re_i       (reg_data_re & wb_ack_o),
+            .enq_i      (core_recv_buf_valid & reg_lcr[0]),
+            .deq_i      (reg_data_re & wb_ack_o),
             .dat_i      (core_reg_data),
             .dat_o      (rxfifo_data_o),
             .full_o     (rxfifo_full_o),
             .empty_o    (rxfifo_empty_o)
         );
 
-        FIFO_sync #(
+        fifo_sync #(
             .DEPTH(FIFO_DEPTH),
             .DATAW(8)
         ) txfifo (
             .clk_i      (wb_clk_i),
             .rst_i      (wb_rst_i),
-            .we_i       (reg_data_we & wb_ack_o),
-            .re_i       (core_send_buf_empty & reg_lcr[1]),
+            .enq_i      (reg_data_we & wb_ack_o),
+            .deq_i      (core_send_buf_empty & reg_lcr[1]),
             .dat_i      (wb_dat_i[7:0]),
             .dat_o      (txfifo_data_o),
             .full_o     (txfifo_full_o),
