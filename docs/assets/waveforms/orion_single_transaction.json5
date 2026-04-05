@@ -1,0 +1,22 @@
+{
+  // Orion Single Read/Write
+  // Transaction 1: (read addr=A0) response arrives with D0 next cycle
+  // Transaction 2: (read addr=A1) response arrives with D1 after 2 cycles
+  // Transaction 3: (write addr=A2, wdata=D2) response arrives next cycle
+  signal: [
+    {name: 'clk',   wave: 'P..........'}, 
+    ['Request', 
+    	{name: 'addr',  wave: 'x5x.5x..7x.', data:['A0', 'A1', 'A2']},
+	    {name: 'mask',  wave: 'x5x.5x..7x.', data:['0xf', '0xf', '0xf']},
+    	{name: 'wdata', wave: 'x.......7x.',  data:['D2']},
+    	{name: 'we',    wave: 'x0x.0x..1x.'},
+    	{name: 'ready', wave: '01.........'},
+    	{name: 'valid', wave: '010.10..10.'},
+    ],
+    ['Resp', 
+    	{name: 'resp',  wave: '0.10..10.10'},
+    	{name: 'rdata', wave: 'x.5x..5x...', data:['D0', 'D1']},
+    	{name: 'err',   wave: '0..........'}
+    ]
+  ]
+}

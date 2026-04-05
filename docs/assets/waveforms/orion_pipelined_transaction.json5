@@ -1,0 +1,23 @@
+{
+  // Orion Pipelined Read/Write
+  // Transaction 1: (read addr=A0) response arrives with D0 next cycle
+  // Transaction 2: (write addr=A1, wdata=D1) response arrives after 4 cycles
+  // Transaction 3: (read addr=A2) response arrives with D2 after 4 cycles
+  // Transaction 4: (write addr=A3, wdata=D3) response arrives after 3 cycles (failed)
+  signal: [
+    {name: 'clk',   wave: 'P..........'}, 
+    ['Request', 
+    	{name: 'addr',  wave: 'x5678..x...', data:['A0', 'A1', 'A2', 'A3']},
+    	{name: 'mask',  wave: 'x5678..x...', data:['0xf', '0xf', '0xf', '0xf']},
+    	{name: 'wdata', wave: 'x.6x8..x...',  data:['D1', 'D3']},
+    	{name: 'we',    wave: 'x0101..x...'},
+    	{name: 'ready', wave: '01..0.1....'},	
+    	{name: 'valid', wave: '01.....0...'},
+    ],
+    ['Resp',    	
+    	{name: 'resp',  wave: '0.10..1.010'},
+     	{name: 'rdata', wave: 'x.5x...8x..', data:['D0', 'D2']},
+    	{name: 'err',   wave: '0........10'}
+    ]
+  ]
+}

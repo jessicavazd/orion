@@ -39,6 +39,21 @@ clean-lib:
 
 
 ################################################################################
+# Docs
+################################################################################
+.PHONY: docs
+docs: docs-html docs-serve
+
+.PHONY: docs-html
+docs-html:
+	@printf "$(CLR_GR)>> Generating docs: html$(CLR_NC)\n"
+	mkdocs build --site-dir docs/build
+
+.PHONY: docs-serve
+docs-serve:
+	mkdocs serve --dev-addr localhost:8000 -w mkdocs.yml -w docs -w docs/assets -w docs/js
+
+################################################################################
 # Run Tests
 ################################################################################
 .PHONY: test

@@ -1,0 +1,82 @@
+digraph orion_soc {
+    graph [
+        label="Orion SoC"
+        labelloc=t
+        fontname="Helvetica"
+        fontsize=15
+        rankdir=TD
+        nodesep=0.6
+        ranksep=1.0
+        compound=true
+    ]
+
+    node [fontname="Helvetica" fontsize=10 shape=box style=filled]
+    edge [fontname="Helvetica" fontsize=9]
+
+    // ---------------- CPU ----------------
+    subgraph cluster_cpu {
+        label="orion_wb"
+        style=filled
+        fillcolor="#e8f0fe"
+        color="#5577cc"
+        penwidth=2
+
+        subgraph cluster_core {
+            label="orion_core"
+            style=filled
+            fillcolor="#ddeeff"
+            color="#7799dd"
+
+            F [label="Fetch"]
+            D [label="Decode"]
+            E [label="Execute"]
+            M [label="Memory"]
+            W [label="Writeback"]
+            F -> D -> E -> M -> W
+        }
+
+        IA [label="WB Adapter\n(iport)", fillcolor="#ffe8cc"]
+        DA [label="WB Adapter\n(dport)", fillcolor="#ffe8cc"]
+
+        F:s -> IA:n
+        E:s -> DA:n
+    }
+
+    // ---------------- INTERCONNECT ----------------
+    subgraph cluster_xbar {
+        label="Interconnect"
+        style=filled
+        fillcolor="#fff7c7"
+        color="#6d683e"
+        penwidth=2
+
+        ARB [label="Arbiter", fillcolor="#c1ffc9"]
+        DMX [label="Demux", fillcolor="#c1ffc9"]
+
+        // {rank=same; ARB DMX}
+    }
+
+    // ---------------- MEMORY ----------------
+    // subgraph cluster_mem {
+    //     label="Memory / IO"
+    //     style=filled
+    //     fillcolor="#f5f5f5"
+    //     color="#999999"
+
+        RAM  [label="spram_wb\n64 KB\n0x0001_0000", fillcolor="#d4edda"]
+        UART [label="uart_wb\n0x1000_0000", fillcolor="#fce8d5"]
+
+        {rank=same; RAM UART}
+    // }
+
+    // ---------------- CONNECTIONS ----------------
+    IA -> ARB:n
+    DA -> DMX:n
+
+    DMX:s -> ARB:n
+    ARB:s -> RAM:n
+    DMX:s -> UART:n
+
+    // DMX -> RAM
+    // DMX -> UART
+}

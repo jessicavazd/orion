@@ -384,10 +384,10 @@ public:
     }
 
     void sim_log() {
+        if(! *signal_ptrs.instr_valid) {
+            return; // skip bubbles
+        }
         if (log_format == "spike") {
-            if(! *signal_ptrs.instr_valid) {
-                return; // skip bubbles
-            }
             /*
             Spike format:
                 default:    core  {core_id}: <priv> <pc> (<instr>)

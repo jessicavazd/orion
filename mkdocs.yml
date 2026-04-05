@@ -1,0 +1,21 @@
+site_name: Orion Documentation
+theme: readthedocs
+
+plugins:
+  - mermaid2
+  - glightbox
+  - markdownwavedrom
+
+markdown_extensions:
+  - mkdocs_graphviz
+
+extra_javascript:
+  - https://cdn.jsdelivr.net/gh/rod2ik/cdn@main/mkdocs/javascripts/mkdocs-graphviz.js
+
+extra_javascript:
+  - js/wavedrom-init.js
+  # - wavedrom.unpkg.js
+  # - skin-default.js
+  # above, place *.js in docs directory, or below from internet.
+  - https://cdn.jsdelivr.net/npm/wavedrom@3/wavedrom.min.js
+  - https://wavedrom.com/skins/default.js
