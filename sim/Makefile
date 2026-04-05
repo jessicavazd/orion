@@ -39,8 +39,13 @@ VSRCS+= $(ORION_HOME)/rtl/core/regfile.sv
 VSRCS+= $(ORION_HOME)/rtl/core/execute.sv
 VSRCS+= $(ORION_HOME)/rtl/core/memory.sv
 VSRCS+= $(ORION_HOME)/rtl/core/writeback.sv
+VSRCS+= $(ORION_HOME)/rtl/core/orion_wb.sv
 VSRCS+= $(ORION_HOME)/rtl/soc/orion_soc.sv
 VSRCS+= $(wildcard $(ORION_HOME)/rtl/lib/*.sv)
+VSRCS+= $(ORION_HOME)/rtl/ip/wishbone/Xbar2x2_wb.v
+VSRCS+= $(ORION_HOME)/rtl/ip/uart/uart_core.sv
+VSRCS+= $(ORION_HOME)/rtl/ip/uart/uart_wb.sv
+VSRCS+= $(ORION_HOME)/rtl/ip/mem/spram_wb.sv
 
 VTOP:= orion_soc
 
@@ -52,6 +57,7 @@ VC:= verilator
 VFLAGS:= --cc -Wall -DSIMULATION --Mdir $(VERILATED_DIR)
 VFLAGS+= --top-module $(VTOP)
 VFLAGS+= -I$(ORION_HOME)/rtl/common
+VFLAGS+= -Wno-DECLFILENAME -Wno-UNUSEDSIGNAL
 
 ###################################
 # Orion Config
@@ -149,4 +155,3 @@ clean:
 	rm -f $(OBJ_DIR)/*
 	rm -f $(VERILATED_DIR)/*
 	rm -f $(EXE)
-

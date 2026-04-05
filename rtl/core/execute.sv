@@ -5,8 +5,10 @@ import orion_types::*;
 (
     // input logic         clk_i,
     // input logic         rst_i,
+    output logic                stall_o,
 
     // DMEM PORT
+    input  logic                dmem_ready_i,
     output logic                dmem_valid_o,
     output logic [ADDRW-1:0]    dmem_addr_o,
     output logic [MASKW-1:0]    dmem_mask_o,
@@ -200,6 +202,8 @@ end
 assign dmem_addr_o   = {alu_out[ADDRW-1:2], 2'b00};
 assign dmem_mask_o   = mem_mask;
 assign dmem_valid_o  = id_ex_i.valid && (id_ex_i.is_load || id_ex_i.is_store); 
+
+assign stall_o = dmem_valid_o && !dmem_ready_i;
 
 logic [XLEN-1:0] mem_wdata;
 always_comb begin

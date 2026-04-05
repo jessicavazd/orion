@@ -17,23 +17,30 @@ module fifo_sync #(
     output logic             full_o,
     output logic             empty_o
 );
-    parameter PTRW = $clog2(DEPTH);
+    localparam int PTRW = (DEPTH <= 1) ? 1 : $clog2(DEPTH);
 
-    // The `head_ptr` and `tail_ptr` registers are `PTRW` bits wide, where `PTRW` is `$clog2(DEPTH)` + 1.
-    // The extra MSB (PTRWth bit) is used to distinguish between full and empty conditions in the FIFO.
-    // - When the MSBs of `head_ptr` and `tail_ptr` differ, it indicates that the FIFO has wrapped around.
-    // - This is essential for correctly computing the `full_o` signal, which uses both the MSB and the lower bits.
+    logic [PTRW:0] head_ptr;
+    logic [PTRW:0] tail_ptr;
+    logic [PTRW-1:0] head_idx;
+    logic [PTRW-1:0] tail_idx;
+    logic [DATAW-1:0] mem [0: DEPTH-1];
 
-    // The lower `PTRW-1` bits of `head_ptr` and `tail_ptr` are used to index the FIFO memory array (`mem`).
-    // Masking with `[PTRW-1:0]` ensures that the memory address wraps around when the pointers exceed `DEPTH - 1`.
-    // This creates a circular buffer effect, allowing the FIFO to reuse memory locations efficiently.
+    function automatic logic [PTRW:0] ptr_inc(input logic [PTRW:0] ptr);
+        begin
+            if (ptr[PTRW-1:0] == PTRW'(DEPTH-1)) begin
+                ptr_inc[PTRW] = ~ptr[PTRW];
+                ptr_inc[PTRW-1:0] = '0;
+            end
+            else begin
+                ptr_inc = ptr + {{PTRW{1'b0}}, 1'b1};
+            end
+        end
+    endfunction
 
-    reg [PTRW:0] head_ptr;
-    reg [PTRW:0] tail_ptr;
+    assign head_idx = head_ptr[PTRW-1:0];
+    assign tail_idx = tail_ptr[PTRW-1:0];
     assign empty_o = (head_ptr == tail_ptr);
-    assign full_o  = (head_ptr[PTRW-1:0] == tail_ptr[PTRW-1:0]) && (head_ptr[PTRW] ^ tail_ptr[PTRW]);
-
-    reg [DATAW-1:0] mem [0: DEPTH-1];
+    assign full_o  = (head_idx == tail_idx) && (head_ptr[PTRW] ^ tail_ptr[PTRW]);
     
     always_ff @(posedge clk_i) begin
         if(rst_i) begin
@@ -44,26 +51,26 @@ module fifo_sync #(
             case ({enq_i, deq_i})
                 2'b10: begin // Enqueue only
                     if (!full_o) begin
-                        mem[head_ptr[PTRW-1:0]] <= dat_i;
-                        head_ptr <= head_ptr + 1;
+                        mem[head_idx] <= dat_i;
+                        head_ptr <= ptr_inc(head_ptr);
                     end
                 end
                 2'b01: begin // Dequeue only
                     if (!empty_o) begin
-                        tail_ptr <= tail_ptr + 1;
+                        tail_ptr <= ptr_inc(tail_ptr);
                     end
                 end
                 2'b11: begin // Enqueue and dequeue simultaneously
                     if (empty_o) begin
                         // just enqueue
-                        mem[head_ptr[PTRW-1:0]] <= dat_i;
-                        head_ptr <= head_ptr + 1;
+                        mem[head_idx] <= dat_i;
+                        head_ptr <= ptr_inc(head_ptr);
                     end
                     else begin
                         // enqueue and dequeue in the same cycle (even if fifo full)
-                        mem[head_ptr[PTRW-1:0]] <= dat_i;
-                        head_ptr <= head_ptr + 1;
-                        tail_ptr <= tail_ptr + 1;
+                        mem[head_idx] <= dat_i;
+                        head_ptr <= ptr_inc(head_ptr);
+                        tail_ptr <= ptr_inc(tail_ptr);
                     end
                 end
                 default: ;
@@ -71,5 +78,5 @@ module fifo_sync #(
         end
     end
 
-    assign dat_o = mem[tail_ptr[PTRW-1:0]];
+    assign dat_o = mem[tail_idx];
 endmodule

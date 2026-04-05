@@ -1,0 +1,1 @@
+python3 generators/gen_wbxbar.py -o Xbar2x2_wb.v xbar --name Xbar2x2_wb --nmasters 2 --nslaves 2 --type full --connectivity "0:0;1:*"

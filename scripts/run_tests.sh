@@ -6,6 +6,12 @@ if ((BASH_VERSINFO[0] < 4)); then
     exit 1
 fi
 
+# Check if spike is available
+if ! command -v spike &> /dev/null; then
+    echo "Error: 'spike' command not found. Please install RISC-V Spike simulator and ensure it's in your PATH."
+    exit 1
+fi
+
 TEST_LOG="${ORION_HOME}/test.log"
 : > "$TEST_LOG"
 

@@ -17,7 +17,7 @@ import orion_types::*;
     input  logic [XLEN-1:0]     imem_rdata_i,
     output logic                imem_valid_o,
     input  logic                imem_resp_i,
-    // input  logic                imem_stall_i,
+    input  logic                imem_ready_i,
 
     // D$ interface
     output logic [ADDRW-1:0]    dmem_addr_o,
@@ -26,8 +26,8 @@ import orion_types::*;
     output logic [MASKW-1:0]    dmem_mask_o,
     output logic                dmem_we_o,
     output logic                dmem_valid_o,
-    input  logic                dmem_resp_i
-    // input  logic                dmem_stall_i
+    input  logic                dmem_resp_i,
+    input  logic                dmem_ready_i
 );
     // Interfaces
     if_id_t  if_id, if_id_reg;
@@ -56,6 +56,7 @@ import orion_types::*;
     logic load_use_stall_req;
 
     logic mem_stall_o;
+    logic ex_stall_o;
 
 
     ////////////////////////////////////////////////////////////////////////////
@@ -63,7 +64,7 @@ import orion_types::*;
     assign if_pc_stall  = if_id_stall /*|| imem_stall_i*/;
 
     assign if_id_stall  = id_ex_stall || load_use_stall_req;
-    assign id_ex_stall  = ex_mem_stall /*|| dmem_stall_i*/;
+    assign id_ex_stall  = ex_mem_stall || ex_stall_o;
     assign ex_mem_stall = mem_stall_o;
     assign mem_wb_stall = 1'b0;
 
@@ -85,6 +86,7 @@ import orion_types::*;
         .imem_rdata_i   (imem_rdata_i),
         .imem_valid_o   (imem_valid_o),
         .imem_resp_i    (imem_resp_i),
+        .imem_ready_i   (imem_ready_i),
 
         .stall_i        (if_pc_stall),
         .ex_if_i        (ex_if),
@@ -133,10 +135,10 @@ import orion_types::*;
     ////////////////////////////////////////////////////////////////////////////
     // Execute stage
     execute execute_stg (
-        // .clk_i          (clk_i),
-        // .rst_i          (rst_i),
+        .stall_o         (ex_stall_o),
 
         // DMEM PORT
+        .dmem_ready_i    (dmem_ready_i),
         .dmem_valid_o    (dmem_valid_o),
         .dmem_addr_o     (dmem_addr_o),
         .dmem_mask_o     (dmem_mask_o),
@@ -164,9 +166,6 @@ import orion_types::*;
     ////////////////////////////////////////////////////////////////////////////
     // Memory stage
     memory memory_stg (
-        // .clk_i          (clk_i),
-        // .rst_i          (rst_i),
-
         .dmem_rdata_i   (dmem_rdata_i),
         .dmem_resp_i    (dmem_resp_i),
         .stall_o        (mem_stall_o),
@@ -191,20 +190,10 @@ import orion_types::*;
     ////////////////////////////////////////////////////////////////////////////
     // Writeback stage
     writeback writeback_stg (
-        // .clk_i          (clk_i),
-        // .rst_i          (rst_i),
-
         .mem_wb_i       (mem_wb_reg),
         .wb_id_o        (wb_id)
     );
 
 
 
-    // `UNDRIVEN_VAR(dmem_addr_o)
-    // `UNDRIVEN_VAR(dmem_wdata_o)
-    // `UNDRIVEN_VAR(dmem_mask_o)
-    // `UNDRIVEN_VAR(dmem_we_o)
-    // `UNDRIVEN_VAR(dmem_valid_o)
-    // `UNUSED_VAR(dmem_resp_i)
-    `UNUSED_VAR(dmem_rdata_i)
 endmodule
